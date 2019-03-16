@@ -1,0 +1,69 @@
+% !TEX program = xelatex
+\documentclass[UTF8]{ctexart}
+\usepackage{xeCJK}
+\setCJKmainfont[BoldFont=STHeitiSC-Medium, ItalicFont=AdobeKaitiStd-Regular]{FZXSSJW--GB1-0}
+\setCJKsansfont{HiraginoSansGB-W3}
+\setCJKmonofont{FZLTXHK--GBK1-0}
+\CTEXsetup[format+={\raggedright}]{section}
+
+\usepackage{fontspec}
+\setmainfont{TimesNewRomanPSMT}
+\setsansfont{Verdana}
+\setmonofont{CourierNewPSMT}
+
+\usepackage{float}
+
+\usepackage{geometry}
+\geometry{a4paper,left=3cm,right=3cm,top=2.5cm,bottom=2.5cm}
+
+\usepackage{fancyhdr}
+\pagestyle{fancy}
+\fancyhf{}
+\chead{\itshape 现代密码学简介}
+\rhead{\thepage}
+\renewcommand\headrulewidth{0.6pt}
+
+\renewcommand{\labelitemii}{$\circ$}
+
+\usepackage{amsmath}
+\usepackage{esvect}
+\usepackage{bm}
+\usepackage{upgreek}
+\def \paral {/\!/}
+\usepackage{mathtools}
+\usepackage{amssymb}
+\usepackage{extarrows}
+\usepackage{mathrsfs}
+\usepackage[amssymb]{SIunits}
+\renewcommand{\epsilon}{\varepsilon}
+\renewcommand{\phi}{\varphi}
+\newcommand{\ext}{\displaystyle}
+\newcommand{\arsinh}{\mathrm{arsinh}\,}
+\newcommand{\arcosh}{\mathrm{arcosh}\,}
+\newcommand{\artanh}{\mathrm{artanh}\,}
+\newcommand{\dif}{\mathop{}\!{}\mathrm{d}}
+\newcommand{\ic}{\mathrm{i}}
+\newcommand{\Tr}{\mathrm{T}}
+\newcommand{\ke}{\mathrm{k}}
+\newcommand{\p}{\mathrm{p}}
+\newcommand{\Z}{\mathbb{Z}}
+
+\def\mathbm#1{{\bm #1}}
+\def\vec#1{\vv{\bm #1}}
+\def\xvec#1#2{\vv{{\bm #1}_{#2}}}
+\def\yvec#1#2{\vv{{\bm #1}^{#2}}}
+\def\abs#1{\left| #1 \right|}
+\def\der#1#2{\frac{\dif #1}{\dif #2}}
+\def\pth#1{\left( {#1}\right)}
+\def\E#1#2{{\mathrm{E}_{#1}\left({#2}\right)}}
+\def\D#1#2{{\mathrm{D}_{#1}\left({#2}\right)}}
+\renewcommand{\rem}{{\bfseries Remark}}
+
+\usepackage{hyperref}
+\hypersetup{pdfauthor={张曙},
+pdftitle={现代密码学简介}
+}
+\begin{document}
+
+Hello!This is 
+\end{document}
