@@ -45,7 +45,6 @@
 \usepackage{mathrsfs}
 \usepackage[amssymb]{SIunits}
 \renewcommand{\epsilon}{\varepsilon}
-\renewcommand{\phi}{\varphi}
 \newcommand{\ext}{\displaystyle}
 \newcommand{\arsinh}{\mathrm{arsinh}\,}
 \newcommand{\arcosh}{\mathrm{arcosh}\,}
@@ -67,6 +66,7 @@
 \def\brace#1{\left\{ {#1} \right\}}
 \def\E#1#2{{\mathrm{E}_{#1}\left({#2}\right)}}
 \def\D#1#2{{\mathrm{D}_{#1}\left({#2}\right)}}
+\def\GF{\mathrm{GF}}
 \renewcommand{\rem}{{\bfseries Remark}}
 
 \usepackage{hyperref}
@@ -254,7 +254,8 @@ hidelinks
 \subsection{一次一密}
 上述的单表代换密码和多表代换密码看似十分安全，但是如果用来加密由拉丁字母组成的用语言逻辑形成的一句话时，却有一个致命的弱点。虽然这些密码不会直接暴露明文，但却会暴露明文中各个字母出现的频率。我们知道，在任何一门由字母组成的语言文字中，每个字母出现的频率在语句十分长时是趋向于一个定值的。比如说，在英文中，有一个著名的短语：``ETAOIN SHRDLU''. 这个短语是英文中出现频率最高的12个字母，从高到低排列。根据这些频率，也是一个可以用于攻破这两种密码的方法。那么，有没有什么方法能使密文不显示明文中每个字母出现的频率呢？一次一密的方法就是答案。\par
 为了加密某个长度为$n$的字符串，我们取另一个长度为$n$的字符串作为密钥。所得的密文就是明文每个字符在字母表中的位置与密钥每个字符在字母表中的位置相加。由密文得到明文也就是密文中每个字符在字母表中的位置与密钥每个字符在字母表中的位置相减。\par
-这种方式之所以称为一次一密，是因为同一串密钥只能使用一次。试想如果有人窃得了用同一串密钥加密的两个密文$C_1, C_2$, 将这两个字符串中的每个字符按其在字母表中的位置相减，那么如果出现$0$, 那么对应位置就就有可能是出现频率比较高的几个字母。当然，更严谨的论证可以在之后看到。
+这种方式之所以称为一次一密，是因为同一串密钥只能使用一次。试想如果有人窃得了用同一串密钥加密的两个密文$C_1, C_2$, 将这两个字符串中的每个字符按其在字母表中的位置相减，那么如果出现$0$, 那么对应位置就就有可能是出现频率比较高的几个字母。当然，更严谨的论证可以用之后提到的概率论的方式证明。\par
+最后，值得一提的是，现代使用的量子加密中，最常用的加密机制就是一次一密。
 \section{加密系统的安全性}
 为了从数学上定义加密系统的安全性，我们必须引入一些和概率有关的定义。这时，请回忆一下之前定义的加密方案$\pth{\mathrm{E}, \mathrm{D}, \mathrm{G}}$. 其中，$\mathrm{E}$代表加密算法，$\mathrm{D}$代表解密算法，$\mathrm{G}$代表密钥生成算法。此外，还有明文空间$\mathcal{M}$, 密文空间$\mathcal{C}$, 密钥空间$\mathcal{K}$.\par
 对于$m\in\mathcal{M}$, $M$为表示明文的随机变量，用$\Pr\brack{M=m}$表示明文为$m$的概率。这一定义看似难以理解，为什么明文会出现概率呢？从某种意义上，可以理解成假想的敌手在没有任何信息的情况下猜测明文的概率。比如说，在没有任何信息的情况下，一个敌手可能会假定明文为``attack tomorrow''或``don't attack''. 且敌手认为明文为``attack tomorrow''的概率为$0.6$, 明文为``don't attack''的概率为$0.4$.\par
@@ -301,4 +302,355 @@ hidelinks
 \end{itemize}
 
 值得指出的是，关于加密系统的安全性，尽管我们使用日常的语言叙述的这些概念，但这些概念实际上都是有严格的数学定义的。鉴于我们目前的数学 水平有限，在这里引入这些数学概念是不适合的。因此，我们仅从感性上理解这些概念即可。
+\chapter{流密码}
+\section{数学上的基本概念}
+从这章开始，我们就不再拘泥于古代的加密拉丁字母的加密方式，而开始转向数字化。我们知道，在现代科技中，密码学最常应用的领域就是计算机领域，而计算机领域则是由二进制的$0, 1$串构成。因此，在接下来的讨论中，我们都将明文空间及密文空间看作由$0$和$1$构成的二进制串组成的集合。\par
+因此，为了接下来能更顺畅地进行关于流密码的讨论，这里先介绍一些数学上关于这方面的基础知识。
+\subsection{$\GF\pth{2}$上的加法与乘法}
+由于我们讨论的仅是$0$和$1$及它们的运算, 因此，我们定义一个有限域$\GF\pth{2}=\brace{0, 1}$. \par
+有限域$\GF\pth{2}$上的加法被定义成逻辑上的异或，也可以理解成模$2$加法。以下为$\GF\pth{2}$上的加法表：
+\begin{table}[H]
+    \centering
+    \caption{$\GF\pth{2}$上的加法表}
+    \begin{tabular}{c|cc}\hline
+        $+$&0&1\\\hline
+        0&0&1\\
+        1&1&0\\\hline
+    \end{tabular}
+\end{table}
+
+如果我们定义一个集合中元素$a$的加法逆元$-a$满足
+\[a+\pth{-a}=\pth{-a}+a=0\]
+
+则$\GF\pth{2}$上的加法逆元表为：
+\begin{table}[H]
+    \centering
+    \caption{$\GF\pth{2}$上的加法逆元表}
+    \begin{tabular}{c|cc}\hline
+        $a$&0&1\\\hline
+        $-a$&0&1\\\hline
+    \end{tabular}
+\end{table}
+
+而$\GF\pth{2}$上的减法则可以定义成与加法逆元的加法，即
+\begin{equation}
+    a-b=a+\pth{-b}
+\end{equation}
+
+$\GF\pth{2}$上的乘法则被定义成了逻辑上的与。以下为$\GF\pth{2}$上的乘法表：
+\begin{table}[H]
+    \centering
+    \caption{$\GF\pth{2}$上的乘法表}
+    \begin{tabular}{c|cc}\hline
+        $\cdot$&0&1\\\hline
+        0&0&0\\
+        1&0&1\\\hline
+    \end{tabular}
+\end{table}
+
+根据上述的定义，我们可以得出以下$\GF\pth{2}$上常用的运算规则：
+\begin{itemize}
+    \item 
+        \begin{equation}
+            \forall x\in\GF\pth{2}, x+x=0
+        \end{equation}
+    \item 
+        \begin{equation}
+            \forall x, y\in\GF\pth{2}, x-y=y-x=x+y
+        \end{equation}
+    \item 
+        \begin{equation}
+            \forall x\in\GF\pth{2}, x\cdot x=x
+        \end{equation}
+\end{itemize}
+\subsection{$\GF\pth{2}$上的多项式}
+此外，还有一个我们未曾接触过的知识：$\GF\pth{2}$上的多项式。为此，不妨先介绍一下多项式理论。\par
+对于表达式
+\begin{equation}
+    a_nx^n+a_{n-1}x^{n-1}+\cdots +a_1x+a_0=\sum_{i=0}^na_ix_i
+\end{equation}
+
+我们称其系数为$a_0, a_1,\ldots, a_n$. 其系数集$S$为$a_0, a_1,\ldots ,a_n$的取值范围。当$a_n\neq 0$时，称该多项式为$S$上的$n$次多项式。比如说，如果其系数的取值仅限于$0$和$1$, 则称这个多项式为$\GF\pth{2}$上的多项式。\par
+值得指出的是，我们研究多项式理论时，多项式在我们眼中仅仅是一个表达式，我们并不需要去对每一个$x$的取值进行多项式的求值。它就相当于一个集合的元素，一个多项式就是一个最小的单位。其加、减、乘、除就应该像我们定义复数集那样重新地进行定义。也就是说，我们通过定义来确定多项式$f+g=h$, 而不是通过$\forall x, h(x)=f(x)+g(x)$来定义多项式之和。尽管结果确实如此，但这应该理解为自洽的定义，而非推导。\par
+\subsubsection{多项式的加法}
+两个多项式之和的多项式的系数，等于其对应系数之和。即：\par
+若$m\geq n$, 则
+\begin{equation}
+    \sum_{i=0}^ma_ix^i+\sum_{j=0}^nb_jx^j=\sum_{k=0}^n\pth{a_k+b_k}x^k+\sum_{i=n+1}^ma_ix^i
+\end{equation}
+其中$a_k+b_k$的加法应理解成系数集$S$上的加法。\par
+用更形象的方法来说，我们不妨考虑实数集上的多项式$f=x^2+1$与$g=x^3+x^2$, 那么其和我们可以类似于小学时的竖式来计算：
+\begin{table}[H]
+    \centering
+    \begin{tabular}{ccrcrcr}
+        $f$&$=$&&&$x^2$&$+$&$1$\\
+        $g$&$=$&$x^3$&$+$&$x^2$&$+$&$1$\\\hline
+        $f+g$&$=$&$x^3$&$+$&$2x^2$&$+$&$2$
+    \end{tabular}
+\end{table}
+
+但是，我们这里也需要注意到刚刚说的，$a_k+b_k$的加法应理解成系数集$S$上的加法。比如说还是刚刚的两个多项式，但其在$\GF\pth{2}$上的加法为：
+\begin{table}[H]
+    \centering
+    \begin{tabular}{ccrcrcr}
+        $f$&$=$&&&$x^2$&$+$&$1$\\
+        $g$&$=$&$x^3$&$+$&$x^2$&$+$&$1$\\\hline
+        $f+g$&$=$&$x^3$&&&&
+    \end{tabular}
+\end{table}
+
+这里$2x^2$与$2$之所以不见了，是因为在$\GF\pth{2}$上，$1+1=0$.
+\subsubsection{多项式的减法}
+类似于多项式的加法的定义，两个多项式之差的系数，等于其对应系数之差。在$\GF\pth{2}$上的多项式之差的例子：
+\begin{table}[H]
+    \centering
+    \begin{tabular}{ccrcrcr}
+        $f$&$=$&&&$x^2$&$+$&$1$\\
+        $g$&$=$&$x^3$&$+$&$x^2$&$+$&$1$\\\hline
+        $f-g$&$=$&$x^3$&&&&
+    \end{tabular}
+\end{table}
+
+这里是由于$\pth{0-1}x^3=\pth{0+1}x^3=x^3$, $\pth{1-1}x^2=0$, $1-1=0$.
+\subsubsection{多项式的乘法}
+我们可以形式上地用乘法分配律进行计算，并且约定$x^ix^j=x^{i+j}$. 下面演示一下$\GF\pth{2}$上多项式的乘法运算：
+\begin{align*}
+    &\pth{x+1}\pth{x+1}\\
+    =&xx+\pth{1+1}x+1\\
+    =&x^2+1
+\end{align*}
+注意到在$\GF\pth{2}$上，$\pth{1+1}x=0$.\par
+同时，我们记$f^n=f\cdot f^{n-1}$.
+\subsubsection{多项式的整除}
+对于多项式$f$和$g$, 如果存在多项式$h$, 使得$f=gh$, 则称$g$整除$f$, 记作$g\mid f$, 同时$\ext \frac{f}{g}=h$.\par
+注意这仍是在系数集$S$上的。比如说，在$\GF\pth{2}$中，我们有
+\[\pth{x^2+1}\mid\pth{x+1}^2\]
+
+此外，若一个多项式$f$是不可约的，则说明不存在两个多项式$g, h$, 使得$gh=f$且$g, h$的次数均小于$f$的次数。
+\subsubsection{$\GF\pth{2}$上的常用等式}
+加法交换律
+\begin{equation}
+    f+g=g+f
+\end{equation}
+
+加法结合律
+\begin{equation}
+    \pth{f+g}+h=f+\pth{g+h}
+\end{equation}
+
+乘法交换律
+\begin{equation}
+    fg=gf
+\end{equation}
+
+乘法结合律
+\begin{equation}
+    \pth{fg}h=f\pth{gh}
+\end{equation}
+
+乘法对加法的分配律
+\begin{equation}
+    f\pth{g+h}=fg+fh
+\end{equation}
+
+等比数列求和公式：对于多项式$f$和$g\neq 1$
+\begin{equation}
+    f+gf+fg^2+\cdots +fg^{n-1}=\sum_{i=0}^{n-1}fg^{i}=\frac{f-fg^{n}}{1-g}
+\end{equation}
+\subsubsection{总结}
+在$\GF\pth{2}$这个有限域上的运算和我们在实数集上的运算很不一样，所以在后文中我们应该着重注意运算是定义在$\GF\pth{2}$上的还是定义在实数集上的。同时，我们也该清楚定理叙述的是多项式之间的关系还是值之间的关系。
+\section{流密码的基本概念}
+之前我们讲到“一次一密”的加密方式是完善保密，同时，“一次一密”的缺点也十分显著：密钥过长。那么，有什么办法能规避这样的缺点呢？事实上，“一次一密”的加密方式之所以是完善保密的，最重要的一点是每次密钥的字符串是随机生成的。通过之前讲的香农定理我们可以知道，每个密钥字符串生成的概率均是相等的。如果我们可以降低一点这种随机性的要求，那也许就能实现短密钥+强保密的目标。\par
+为此，我们引入伪随机数序列的概念。由于这个概念的严格定义需要高超的概率论及算法知识，我们只需要感性地理解伪随机数序列为一种，由确定的算法产生的（即相同的初始条件下的输出是相同的），与真随机数序列性质几乎一样的序列。\par
+设$f(k, \sigma_i)$为一个能产生伪随机序列的算法，其中$k$为输入的密钥，$\sigma_i$为当前时刻系统的状态。在每个时刻，$f(k, \sigma_i)$输出一个伪随机数，同时系统状态改变为$\sigma_{i+1}$. 常把一个用于加密算法的伪随机序列称为密钥流，产生伪随机序列的算法称为密钥流产生器。\par
+那么流密码的过程可以理解为：如果设明文为二进制串$X=x_1x_2\cdots x_n$, 密钥为$k$. 在初始状态下，输入$x_1$和$k$, 密钥流生成器根据当前的状态输出一个伪随机数$z_1$, 输出密文$y_1=x_1\oplus z_1$. 接着输入$x_2$, 密钥流生成器根据当前的状态输出一个伪随机数$z_2$, 输出密文$y_2=x_2\oplus z_2$. 以此类推。\par
+我们可以知道，如果密钥流生成器生成的是真随机序列，那么流密码就是“一次一密”，是完善保密。因此，流密码的安全性的关键就在于密钥流生成器。
+\section{密钥流产生器}
+之前在讲到密钥流生成器的时候，我们提到了系统当前的状态$\sigma_i$. 这里的状态，是根据当前的输入和输出而变化的。每输入一个数，密钥流生成器每输出一个数，当前系统的状态就发生了变化。之后会介绍一些具体的例子让大家更加理解“系统的状态”的含义。在这里，我们将流密码分为同步流密码和自同步流密码。如果密钥流生成器中的状态与输入的明文有关，则称为自同步流密码，反之则称为同步流密码。我们接下来讨论的都是同步流密码。\par
+为了生成近似真随机的伪随机序列，常见的密钥流产生器可以被分为线性部分和非线性部分。
+\subsection{密钥流产生器的线性部分}
+\subsubsection{LFSR}
+根据上述的讨论，密钥流产生器应有两个功能：输出密钥流与更新系统状态。密钥流产生器的线性部分也有两个功能：输出中间的过渡字符，并且更新系统状态。所谓中间的过渡字符，意思是该部分的输出并非作为最终输出的伪随机数，而是一个中间用于之后计算的数。\par
+常见的处理方法为：系统的状态$\sigma_i=a_{n, i}a_{n-1, i}\cdots a_{1, i}$由$n$个二进制数构成。在启动之前，具有初始状态$a_{n, 0}a_{n-1, 0}\cdots a_{1, 0}$. 之后，每次的输出$b_i$为
+\begin{equation}
+    b_i=a_{1, i-1}
+\end{equation}
+
+而状态更新的方法为
+\begin{equation}
+    a_{j, i}=\begin{dcases}a_{j+1, i}&1\leq j\leq n-1\\f\pth{a_{1, i-1}, a_{2, i-1}, \ldots, a_{n, i-1}}&j=n\end{dcases}
+\end{equation}
+
+其中反馈函数$f\pth{a_{1, i-1}, a_{2, i-1}, \ldots, a_{n, i-1}}$是一个$\GF\pth{2}$上的线性函数。即：
+\begin{align}
+    a_{n, i}&=f\pth{a_{1, i-1}, a_{2, i-1}, \ldots, a_{n, i-1}}\notag\\
+    &=c_na_{1, i-1}+c_{n-1}a_{2, i-1}+\cdots +c_1a_{n, i-1}\\
+    &=\sum_{k=1}^nc_{n+1-k}a_{k, i-1}
+\end{align}
+其中$c_k\in\GF\pth{2}$, 即$c_k$的取值为$0$或$1$. 这些数字都是固定的，由密钥流产生器本身决定。而这里的加法、乘法运算均为$\GF\pth{2}$上的运算。\par
+我们通过一个例子来熟悉：\par
+设初始状态为$110$, 反馈函数$f(a_{3, i}, a_{2, i}, a_{1, i})=a_{3, i}+a_{1, i}$. 则我们可以通过下表来了解这个线性部分的输出：
+\begin{table}[H]
+    \centering
+    \begin{tabular}{c|c|c|c|c|c|c|c|c|c}\hline
+        $i$&0&1&2&3&4&5&6&7&$\cdots$\\\hline
+        $f(a_3, a_2, a_1)$&1&0&1&0&0&1&1&1&$\cdots$\\\hline
+        $a_3$&1&1&0&1&0&0&1&1&$\cdots$\\\hline
+        $a_2$&1&1&1&0&1&0&0&1&$\cdots$\\\hline
+        $a_1$&0&1&1&1&0&1&0&0&$\cdots$\\\hline
+        $b$&&0&1&1&1&0&1&0&$\cdots$\\\hline
+    \end{tabular}
+\end{table}
+
+其输出序列就为$011101\quad 011101\cdots$.\par
+我们由上面的表可以发现，从每一列来看，随着$i$的递增，上一行的数会传给下一行的数。这似乎是某种线性寄存器的工作形式。因此，我们称密钥流产生器的线性部分为一个线性反馈移位寄存器(Linear Feedback Shift Register, LFSR). 若其状态具有$n$个二进制数字，且$c_n\neq 0$, 则称其为$n$级LFSR.
+\subsubsection{LFSR的输出序列}
+如果设$B=b_1b_2\cdots b_i\cdots $表示LFSR的输出序列，则由上述的讨论也可以知道
+\begin{equation}
+    \pth{b_{i+1}b_{i+2}\cdots b_{i+n}}=\pth{a_{1, i-1}a_{2, i-1}\cdots a_{n, i-1}}
+\end{equation}
+
+我们还可以认为，每一个$b_i$都可以代表LFSR的一个状态。那么，由于LFSR的一个状态中有$n$个二进制数，故一个LFSR至多有$2^n$种状态。如果称状态$\sigma=00\cdots 0$为零状态，下面我们证明：零状态的下一个状态是零状态，任何非零状态的下一个状态均不是零状态。\par
+前半句话显然，设$\forall 1\leq j\leq n, a_{j, i}=0$. 对于$j\leq n-1$, $a_{j, i+1}=a_{j+1, i}=0$. 而
+\[a_{n, i}=c_na_{1, i-1}+c_{n-1}a_{2, i-1}+\cdots +c_1a_{n, i-1}=0\]
+
+对于后半句话，若某个非零状态$\sigma_i=a_{n, i}a_{n-1, i}\cdots a_{1, i}$的下一个状态为零状态，则由定义可知，$\forall 2\leq j\leq n, a_{j, i}=a_{j-1, i+1}=0, a_{n, i+1}\neq 0$. 且
+\[0=a_{n, i+1}=c_na_{1, i}+c_{n-1}a_{2, i}+\cdots +c_1a_{n, i}=c_na_{1, i}\]
+
+又由于$c_n\neq 0$, 故$a_{1, i}=0$矛盾。\par
+有上述讨论可知，一个LFSR中的状态，至多$2^n-1$个之后即达成循环。也就是说，一个LFSR产生的序列，周期至多为$2^n-1$. 我们称由LFSR产生的周期为$2^n-1$的序列为一个$m$序列。
+\subsubsection{$m$序列相关定理}
+上述的讨论中，我们提到，反馈函数
+\[a_{n, i}=c_na_{1, i-1}+c_{n-1}a_{2, i-1}+\cdots +c_1a_{n, i-1}=0\]
+中的$c_1, c_2,\ldots ,c_n$由LFSR本身决定。因此，我们称$\GF\pth{2}$上的多项式
+\begin{equation}
+    p(x)=1+c_1x+\cdots +c_{n-1}x^{n-1}+c_nx^n
+\end{equation}
+为LFSR的特征多项式。\par
+对于LFSR生成的一个序列$a_1a_2\cdots a_n\cdots$, 称幂级数
+\begin{equation}
+    A\pth{x}=\sum_{i=1}^{\infty}a_ix^{i-1}
+\end{equation}
+为该序列的生成函数。\par
+对于使用给定的LFSR, 由于初始状态不同而产生的所有$2^n-1$个非零序列构成的集合记作$G\pth{p\pth{x}}$.\par
+下面叙述一个在证明中很有用的定理：\par
+设LFSR的特征多项式$p(x)=1+c_1x+\cdots +c_{n-1}x^{n-1}+c_nx^n$, $A\pth{x}$为$G\pth{p(x)}$中任意序列$\brace{a_n}$的生成函数，则对于$\GF\pth{2}$上的多项式$p(x)$和$A(x)$, 满足
+\begin{equation}
+    A(x)=\frac{\phi(x)}{p(x)}
+\end{equation}
+
+其中
+\begin{equation}
+    \phi(x)=\sum_{i=1}^n\pth{c_{n-i}x^{n-i}\sum_{j=1}^ia_jx^{j-1}}
+\end{equation}
+
+我们可以对$\phi(x)$进行展开：
+\begin{align*}
+    \phi(x)&=\sum_{i=1}^n\pth{c_{n-i}x^{n-i}\sum_{j=1}^ia_jx^{j-1}}\\
+    &=\sum_{i=1}^n\pth{\sum_{j=1}^ic_{n-i}a_jx^{n-i+j-1}}\\
+    &\xlongequal{k=n-i+j-1}\sum_{i=1}^n\sum_{k=n-i}^{n-1}c_{n-i}a_{k-n+i+1}x^k
+\end{align*}
+
+因此，我们可以发现，$\phi(x)$的次数不超过$n-1$.\par
+对于$\GF\pth{2}$上的多项式$p(x)$, 若$p(x)\mid x^p-1$, 则称最小的$p$为$p(x)$的阶。\par
+一个与之相关的定理是：\par
+设$p(x)$是$n$次不可约多项式，其阶为$m$. 则$\forall \brace{a_n}\in G\pth{p(x)}$, $\brace{a_n}$的周期为$m$.\par
+若$n$次不可约多项式$p(x)$的阶为$2^{n}-1$, 则称$p(x)$是本原多项式。\par
+下面叙述的是最关键的一个定理：\par
+设$\brace{a_n}\in G\pth{p(x)}$, 则$\brace{a_n}$为$m$序列的充要条件是$p(x)$是本原多项式。
+\subsubsection{LFSR是伪随机数产生器}
+为了叙述本节的定理，我们引入两个概念：\par
+对于序列$\brace{a_n}$, 长度最大为$n$的连续的0或者1称为一个长度为$n$的0游程或1游程。\par
+对于$\GF\pth{2}$上周期为$2$的序列$\brace{a_n}$, 称其异相关函数为
+\begin{equation}
+    R\pth{\tau}=\frac{1}{T}\sum_{k=1}^T\pth{-1}^{a_k}\pth{-1}^{a_{k+\tau}}, 0<\tau\leq T-1
+\end{equation}
+
+之前我们提到的伪随机数序列，我们在这里给出一种定义方法：
+对于周期序列$\brace{a_n}$, 其为伪随机序列的条件为
+\begin{enumerate}
+    \item 在序列的一个周期内，$0$与$1$的个数至多相差1.
+    \item 在序列的一个周期内，长为$i$的游程占游程总数的$\ext\frac{1}{2^i}$, 且其中0游程与1游程个数相等。
+    \item 该序列的异相关函数是个常数。
+\end{enumerate}
+
+那么我们可以证明，一个$n$长$m$序列是这种意义下的伪随机序列。
+\subsubsection{LFSR密码的破译}
+在本节介绍的破译方式中，值得强调的是，敌手是知道LFSR为$n$级，且敌手获得了一串长度为$2n$的明密文对。\par
+假设敌手获得的明密文对为$x_1x_2\cdots x_{2n}$和$y_1y_2\cdots y_{2n}$, 其需要破译的是LFSR的特征多项式的系数$c_1, c_2,\ldots, c_n$. 那么由于在$\GF\pth{2}$上
+\[y_i=x_i+z_i\]
+其中$z_i$为产生的密钥流的第$n$位。\par
+故在$\GF\pth{2}$上
+\[x_i+y_i=x_i+x_i+z_i=z_i\]
+
+从而敌手就获得了一段长度为$2n$的密钥流$z_1z_2\cdots z_{2n}$.\par
+如果记
+\begin{equation}
+    S_i=\pth{z_{i+1}, z_{i+2}, \ldots, z_{i+n}}^{\mathrm{T}}, i=0, 1,\ldots, n-1
+\end{equation}
+
+且
+\begin{equation}
+    X=\pth{S_0,S_1,\ldots, S_{n-1}}
+\end{equation}
+
+故根据表达式
+\begin{equation}
+    z_{n+i}=c_nz_{i}+c_{n-1}z_{i+1}+\cdots +c_{1}z_{i+n-1}
+\end{equation}
+
+可得：
+\begin{equation}
+    \pth{z_{n+1}, z_{n+2},\ldots, z_{2n}}=\pth{c_n, c_{n-1}, \cdots ,c_{1}}X
+\end{equation}
+
+而我们可以证明$X$是可逆的。故
+\begin{equation}
+    \pth{c_n, c_{n-1}, \cdots ,c_{1}}=\pth{z_{n+1}, z_{n+2},\ldots, z_{2n}}X^{-1}
+\end{equation}
+\subsection{密钥流产生器的非线性部分}
+由上述的讨论我们可以发现，线性的密钥流产生器产生的密钥流一定是周期的。而周期较短的密钥流则相当于一种多表代换密码，相对容易破解。因此，只有加上非线性的部分来处理，才能提高安全性。\par
+密钥流产生器的非线性部分的主要工作是接受一个或多个LFSR的输入，以非线性的方式，输出密钥流。\par
+我们综合判定一个输出密钥流的优劣，可以从两个方面：周期和线性复杂度。周期越长，线性复杂度越高的密钥流越安全。周期我们可以直接衡量，而线性复杂度我们该如何衡量呢？我们称一个序列的线性复杂度为生成该序列的最短LFSR的级数。即若该序列周期$T$满足$2^{n-1}-1<T\leq 2^{n}-1$, 则该序列的线性复杂度为$n$.
+\subsubsection{Geffe序列生成器}
+Geffe序列生成器接受三个LFSR的输入，其输入分别为序列$\brace{a_n^{(1)}}, \brace{a_n^{(2)}}, \brace{a_n^{(3)}}$.\par
+其输出序列$\brace{b_k}$可以表示为
+\begin{table}[H]
+    \centering
+    \begin{tabular}{c|c}\hline
+        $a_k^{(2)}$&$b_k$\\\hline
+        $0$&$a_k^{(3)}$\\\hline
+        $1$&$a_k^{(1)}$\\\hline
+    \end{tabular}
+\end{table}
+
+若$\brace{a_n^{(1)}}$, $\brace{a_n^{(2)}}$和$\brace{a_n^{(3)}}$的周期分别为$2^{n_1}-1$, $2^{n_2}-1$和$2^{n_3}-1$且$n_1, n_2, n_3$两两互素，则$\brace{b_k}$的周期为$\pth{2^{n_1}-1}\pth{2^{n_2}-1}\pth{2^{n_3}-1}$, 线性复杂度为$\pth{n_1+n_3}n_2+n_3$
+\subsubsection{JK触发器}
+JK触发器接受两个LFSR的输入，其输入分别为序列$\brace{a_n^{(1)}}, \brace{a_n^{(2)}}$.\par
+其输出序列$\brace{b_k}$可以表示为
+\begin{table}[H]
+    \centering
+    \begin{tabular}{c|c|c}\hline
+        $a_k^{(1)}$&$a_k^{(2)}$&$b_k$\\\hline
+        $0$&$0$&$b_{k-1}$\\\hline
+        $0$&$1$&0\\\hline
+        $1$&$0$&0\\\hline
+        $1$&$1$&$\overline{b_{k-1}}$\\\hline
+    \end{tabular}
+\end{table}
+
+若$\brace{a_n^{(1)}}$和$\brace{a_n^{(2)}}$的周期分别为$2^n-1$和$2^m-1$且$m, n$互素，$a_0+b_0=1$, 则$\brace{b_k}$的周期为$\pth{2^n-1}\pth{2^m-1}$
+\subsubsection{钟控序列生成器}
+钟控序列接受两个LFSR的输入，其输入分别为序列$\brace{a_n^{(1)}}, \brace{a_n^{(2)}}$. 前一个序列控制后一个序列的时钟周期$n_k$.\par
+其输出序列$\brace{b_k}$可以表示为
+\begin{table}[H]
+    \centering
+    \begin{tabular}{c|c|c}\hline
+        $a_k^{(1)}$&$n_k$&$b_k$\\\hline
+        $0$&$n_{k-1}$&$a_{n_k}^{(2)}$\\\hline
+        $1$&$n_{k-1}+1$&$a_{n_k}^{(2)}$\\\hline
+    \end{tabular}
+\end{table}
+
+若$\brace{a_n^{(1)}}$和$\brace{a_n^{(2)}}$的周期分别为$p_1$和$p_2$, 且记$\ext w=\sum_{i=0}^{p_1-1}a_i^{(1)}$, 则$\brace{b_k}$的周期为$\ext\frac{p_1p_2}{\gcd\pth{w, p_2}}$. 若$p_1=2^m-1, p_2=2^n-1$, 则其线性复杂度为$n\pth{2^m-1}$.
 \end{document}
