@@ -69,6 +69,11 @@
 \def\GF{\mathrm{GF}}
 \renewcommand{\rem}{{\bfseries Remark}}
 
+\usepackage{amsthm}
+
+\newtheorem{Definition}{\hspace{2em}定义}[chapter]
+\newtheorem{theorem}{\hspace{2em}定理}[chapter]
+
 \usepackage{hyperref}
 \hypersetup{pdfauthor={张曙},
 pdftitle={现代密码学简介},
@@ -265,27 +270,35 @@ hidelinks
     \Pr\brack{C=c}=\sum_{c=\E{k}{m}} \Pr\brack{M=m}\Pr\brack{K=k}
 \end{equation}
 
-我们定义完善保密(perfect secrecy):\par
+我们定义完善保密(perfect secrecy):
+\begin{Definition}
 对于明文空间为$\mathcal{M}$的加密方案$\pth{\mathrm{E}, \mathrm{D}, \mathrm{G}}$，若对$\mathcal{M}$上的任何概率分布，任何明文$m\in\mathcal{M}$、任何密文$c\in\mathcal{C}$且$\Pr\brack{C=c}$有
 \begin{equation}
     \Pr\brack{M=m\mid C=c}=\Pr\brack{M=m}
 \end{equation}
-则称加密方案$\pth{\mathrm{E}, \mathrm{D}, \mathrm{G}}$是完善保密。\par
+则称加密方案$\pth{\mathrm{E}, \mathrm{D}, \mathrm{G}}$是完善保密。
+\end{Definition}
+
 用一句通俗的话来讲，就是敌手在窃取密文之后并不会对明文有任何知识。而用概率论的说法，则是随机变量$M$与$C$是独立的。\par
 我们可以通过一些概率论上的技巧，证明“一次一密”的加密方式是完善保密。\par
-但是，完善保密也有其胶柱鼓瑟之处：\par
+但是，完善保密也有其胶柱鼓瑟之处：
+\begin{theorem}
 若明文空间为$\mathcal{M}$的加密方案$\pth{\mathrm{E}, \mathrm{D}, \mathrm{G}}$是完善保密，则
 \begin{equation}
     \abs{\mathcal{K}}\geq\abs{\mathcal{M}}, \abs{\mathcal{C}}\geq\abs{\mathcal{M}}
 \end{equation}
+\end{theorem}
+
 如果用通俗的语言解释上述定理，则是说：要想实现完善保密，则密钥至少要和明文一样长，而密文则也至少要和明文一样长。\par
 我们之前说过，要想实现加密通信，通信双方一定要事先在安全信道中沟通密钥。如果密钥至少和明文一样长，那与其沟通密钥，不如直接把明文告诉对方了。此外，生成的密文也至少和明文一样长，这也是十分浪费通信资源的手段。因此我们可以看到，完善保密确实是一个难以实现的目标。\par
-对于感兴趣的同学，我们可以介绍一个判断一个加密方案是否是完善保密的简单方法，即香农定理：\par
+对于感兴趣的同学，我们可以介绍一个判断一个加密方案是否是完善保密的简单方法，即香农定理：
+\begin{theorem}
 对于明文空间为$\mathcal{M}$的加密方案$\pth{\mathrm{E}, \mathrm{D}, \mathrm{G}}$, 若$\abs{\mathcal{K}} = \abs{\mathcal{M}} = \abs{\mathcal{C}}$, 则当且仅当下列条件成立时，此方案是完善保密加密：
 \begin{enumerate}
     \item 由$\mathrm{G}$产生的任意密钥$k\in\mathcal{K}$的概率都是$\ext\frac{1}{\abs{\mathcal{K}}}$
     \item 对任意明文$m\in\mathcal{M}$和任意密文$c\in\mathcal{C}$, 只存在唯一的密钥$k\in\mathcal{K}$使得$c=\E{k}{m}$.
 \end{enumerate}
+\end{theorem}
 
 关于完善保密，我们的讨论就告一段落。最后，介绍一下对加密系统安全性的分类。\par
 对加密系统安全性的分类，现在主流学界习惯上以敌手的算力及时间进行划分：
@@ -518,11 +531,16 @@ $\GF\pth{2}$上的乘法则被定义成了逻辑上的与。以下为$\GF\pth{2}
 \[0=a_{n, i+1}=c_na_{1, i}+c_{n-1}a_{2, i}+\cdots +c_1a_{n, i}=c_na_{1, i}\]
 
 又由于$c_n\neq 0$, 故$a_{1, i}=0$矛盾。\par
-有上述讨论可知，一个LFSR中的状态，至多$2^n-1$个之后即达成循环。也就是说，一个LFSR产生的序列，周期至多为$2^n-1$. 我们称由LFSR产生的周期为$2^n-1$的序列为一个$m$序列。
+由上述讨论可知，一个LFSR中的状态，至多$2^n-1$个之后即达成循环。也就是说，一个LFSR产生的序列，周期至多为$2^n-1$. 
+\begin{Definition}
+    我们称由LFSR产生的周期为$2^n-1$的序列为一个$m$序列。
+\end{Definition}
 \subsubsection{$m$序列相关定理}
 上述的讨论中，我们提到，反馈函数
 \[a_{n, i}=c_na_{1, i-1}+c_{n-1}a_{2, i-1}+\cdots +c_1a_{n, i-1}=0\]
-中的$c_1, c_2,\ldots ,c_n$由LFSR本身决定。因此，我们称$\GF\pth{2}$上的多项式
+中的$c_1, c_2,\ldots ,c_n$由LFSR本身决定。因此：
+\begin{Definition}
+    我们称$\GF\pth{2}$上的多项式
 \begin{equation}
     p(x)=1+c_1x+\cdots +c_{n-1}x^{n-1}+c_nx^n
 \end{equation}
@@ -532,8 +550,11 @@ $\GF\pth{2}$上的乘法则被定义成了逻辑上的与。以下为$\GF\pth{2}
     A\pth{x}=\sum_{i=1}^{\infty}a_ix^{i-1}
 \end{equation}
 为该序列的生成函数。\par
-对于使用给定的LFSR, 由于初始状态不同而产生的所有$2^n-1$个非零序列构成的集合记作$G\pth{p\pth{x}}$.\par
-下面叙述一个在证明中很有用的定理：\par
+对于使用给定的LFSR, 由于初始状态不同而产生的所有$2^n-1$个非零序列构成的集合记作$G\pth{p\pth{x}}$.
+\end{Definition}
+
+下面叙述一个在证明中很有用的定理：
+\begin{theorem}
 设LFSR的特征多项式$p(x)=1+c_1x+\cdots +c_{n-1}x^{n-1}+c_nx^n$, $A\pth{x}$为$G\pth{p(x)}$中任意序列$\brace{a_n}$的生成函数，则对于$\GF\pth{2}$上的多项式$p(x)$和$A(x)$, 满足
 \begin{equation}
     A(x)=\frac{\phi(x)}{p(x)}
@@ -543,6 +564,7 @@ $\GF\pth{2}$上的乘法则被定义成了逻辑上的与。以下为$\GF\pth{2}
 \begin{equation}
     \phi(x)=\sum_{i=1}^n\pth{c_{n-i}x^{n-i}\sum_{j=1}^ia_jx^{j-1}}
 \end{equation}
+\end{theorem}
 
 我们可以对$\phi(x)$进行展开：
 \begin{align*}
@@ -551,28 +573,42 @@ $\GF\pth{2}$上的乘法则被定义成了逻辑上的与。以下为$\GF\pth{2}
     &\xlongequal{k=n-i+j-1}\sum_{i=1}^n\sum_{k=n-i}^{n-1}c_{n-i}a_{k-n+i+1}x^k
 \end{align*}
 
-因此，我们可以发现，$\phi(x)$的次数不超过$n-1$.\par
-对于$\GF\pth{2}$上的多项式$p(x)$, 若$p(x)\mid x^p-1$, 则称最小的$p$为$p(x)$的阶。\par
-一个与之相关的定理是：\par
-设$p(x)$是$n$次不可约多项式，其阶为$m$. 则$\forall \brace{a_n}\in G\pth{p(x)}$, $\brace{a_n}$的周期为$m$.\par
-若$n$次不可约多项式$p(x)$的阶为$2^{n}-1$, 则称$p(x)$是本原多项式。\par
-下面叙述的是最关键的一个定理：\par
+因此，我们可以发现，$\phi(x)$的次数不超过$n-1$.
+\begin{Definition}
+对于$\GF\pth{2}$上的多项式$p(x)$, 若$p(x)\mid x^p-1$, 则称最小的$p$为$p(x)$的阶。
+\end{Definition}
+
+一个与之相关的定理是：
+\begin{theorem}
+设$p(x)$是$n$次不可约多项式，其阶为$m$. 则$\forall \brace{a_n}\in G\pth{p(x)}$, $\brace{a_n}$的周期为$m$.
+\end{theorem}
+\begin{Definition}
+若$n$次不可约多项式$p(x)$的阶为$2^{n}-1$, 则称$p(x)$是本原多项式。
+\end{Definition}
+
+下面叙述的是最关键的一个定理：
+\begin{theorem}
 设$\brace{a_n}\in G\pth{p(x)}$, 则$\brace{a_n}$为$m$序列的充要条件是$p(x)$是本原多项式。
+\end{theorem}
 \subsubsection{LFSR是伪随机数产生器}
-为了叙述本节的定理，我们引入两个概念：\par
+为了叙述本节的定理，我们引入两个概念：
+\begin{Definition}
 对于序列$\brace{a_n}$, 长度最大为$n$的连续的0或者1称为一个长度为$n$的0游程或1游程。\par
 对于$\GF\pth{2}$上周期为$2$的序列$\brace{a_n}$, 称其异相关函数为
 \begin{equation}
     R\pth{\tau}=\frac{1}{T}\sum_{k=1}^T\pth{-1}^{a_k}\pth{-1}^{a_{k+\tau}}, 0<\tau\leq T-1
 \end{equation}
+\end{Definition}
 
 之前我们提到的伪随机数序列，我们在这里给出一种定义方法：
+\begin{Definition}
 对于周期序列$\brace{a_n}$, 其为伪随机序列的条件为
 \begin{enumerate}
     \item 在序列的一个周期内，$0$与$1$的个数至多相差1.
     \item 在序列的一个周期内，长为$i$的游程占游程总数的$\ext\frac{1}{2^i}$, 且其中0游程与1游程个数相等。
     \item 该序列的异相关函数是个常数。
 \end{enumerate}
+\end{Definition}
 
 那么我们可以证明，一个$n$长$m$序列是这种意义下的伪随机序列。
 \subsubsection{LFSR密码的破译}
