@@ -672,9 +672,50 @@ $\GF\pth{2^8}$上的多项式$a_3x^3+a_2x^2+a_1x+a_0$是模$x^4+1$可逆的，�
 \end{theorem}
 \subsection{输入与输出}
 AES密码接受的明文与密钥的长度可独立选择128位、192位或256位。这些选择之间的区别仅仅在于加密运算的轮数以及子密钥的调度不同。但是在AES密码标准中，明文长度固定为128位，密钥长度可以选择为128, 192或256位，分别叫做AES-128, AES-192和AES-256.\par
-在处理过程中，我们对明文和密钥进一步分组，将其分成每组8比特的分组，可以将其看成字节，在AES中称为一个状态。由于一个字节由8个二进制比特组成，所以字节总共有$2^8$种。因此，可以将一个字节看作$\GF\pth{2^8}$的元素。\par
-对于由字节组成的明文和密钥，我们第二次进行分组，使其分成4个等长的分组，分别记明文和密钥的分组长度为$N_b, N_k$. 对于第$i$个分组中的第$j$个字节，我们可以将其记成$a_{ij}$（明文）或$k_{ij}$, $i, j$从$0$开始。将由$a_{ij}$组成的阵列称为状态阵列。\par
-在AES算法的输入中，将明文和密钥按照$a_{00}a_{10}a_{20}a_{30}a_{01}a_{11}a_{21}a_{31}\ldots$的列有限顺序放置到状态阵列中，输出时也是以字节为单位，按相同的顺序取出。
+在处理过程中，我们对明文和密钥进一步分组。AES密码的每个步骤的处理单位是一个“字节”，即8个比特。因此，我们将明文和密钥分成每组长度为8比特的分组，每个8比特的明文分组称为一个“状态”。由于一个字节由8个二进制比特组成，所以一个字节总共有$2^8$种。因此，可以将一个字节看作$\GF\pth{2^8}$的元素。\par
+对于由字节组成的明文，我们第二次进行分组，使其分成4个等长的分组，记明文的每个分组的长度为$N_b$ (在实际操作中明文总是128位，因此$N_b=4$). 此外，我们也记以字节为单位的密钥的长度除以$4$为$N_k$ ($N_k$的可能取值为$4, 6, 8$). 我们如果假定由字节组成的明文是一个长度为$4N_b$的数列$\{M_n\}$, 那么，我们可以按下表的顺序填充分组：
+\begin{table}[H]
+\centering
+\begin{tabular}{c|c|c|c}\hline
+$M_0$&$M_4$&$\cdots$&$M_{4\pth{N_b}-3}$\\\hline
+$M_1$&$M_5$&$\cdots$&$M_{4\pth{N_b}-2}$\\\hline
+$M_3$&$M_6$&$\cdots$&$M_{4\pth{N_b}-1}$\\\hline
+$M_4$&$M_7$&$\cdots$&$M_{4\pth{N_b}}$\\\hline
+\end{tabular}
+\end{table}
+
+由明文的分组组成的阵列称为状态阵列。在AES的实际过程中，都是对状态阵列进行操作。最终的密文就是从状态序列中，按写入顺序拿出的序列。\par
+因此，在加密的输入阶段，我们要做的事是将明文和密钥按字节分组，然后将明文再填入状态阵列中。在加密的输出阶段，就是将密文从状态阵列中读出，再变成以比特为单位的二进制串（但事实上，明文或密文的按字节分组可以直接在填入状态阵列的时候做。因此，我们只需要实现比特串向字节串的转化用于密钥，而不需要实现字节串向比特串的转化）。在解密阶段，我们要做的也是同样的步骤，只不过是明文和密文对调。\par
+此环节的C程序代码如下：
+\begin{prove}
+\begin{verbatim}
+void bitToByte(bitset<128> inputBits, bitset<8> outputBytes[64])
+{
+    for (int byte = 0; byte < 64; byte++)
+        for (int bit = 0; bit < 8; bit++)
+            outputBytes[byte][bit] = inputBits[8 * byte + bit];
+}
+
+void bitToState(bitset<128> input, bitset<8> state[4][4])
+{
+    for (int column = 0; column < 4; column++)
+        for (int row = 0; row < 4; row++)
+            for (int bit = 0; bit < 8; bit++)
+                state[row][column][bit] = input[32 * column
+                                                + 8 * row + bit];
+}
+
+void stateToBit(bitset<8> state[4][4], bitset<128> &output)
+{
+    for (int column = 0; column < 4; column++)
+        for (int row = 0; row < 4; row++)
+            for (int bit = 0; bit < 8; bit++)
+                output[32 * column + 8 * row + bit]
+                    = state[row][column][bit];
+}
+\end{verbatim}
+\end{prove}
+
 \subsection{轮函数}
 AES的轮函数由4个计算部件组成，分别为字节代换(ByteSub), 行移位(ShiftRow), 列混合(MixColumn), 密钥加(AddRoundKey).
 \subsubsection{字节代换}
@@ -699,11 +740,85 @@ AES的轮函数由4个计算部件组成，分别为字节代换(ByteSub), 行�
 \end{enumerate}
 
 上述这两个步骤可以看作一个8位到8位的S盒。因此，可以用一张表来描述，然后在使用时直接查表即可。 \par
-在解密时，直接用ByteSub的逆表即可，
+在解密时，直接用ByteSub的逆表即可，\par
+其C程序实现如下（省略了加密时的表\verb`bitset<8> S_box[16][16]`和解密时的表\verb`bitset<8> Inv_S_Box[16][16]`）：
+\begin{prove}
+\begin{verbatim}
+void SubByte(bitset<8> state[4][4], CryptoMode cryptoMode)
+{
+    bitset<8> (*crypto_S_box)[16];
+
+    switch (cryptoMode)
+    {
+        case Enc:
+            crypto_S_box = S_box;
+            break;
+            
+        case Dec:
+            crypto_S_box = Inv_S_Box;
+            break;
+            
+        default:
+            break;
+    }
+    
+    for (int row = 0; row < 4; row++)
+        for (int column = 0; column < 4; column++)
+        {
+            bitset<8> previousValue = *(*(state + row) + column);
+            int S_box_row = previousValue[7] * 8
+                                + previousValue[6] * 4
+                                    + previousValue[5] * 2
+                                        + previousValue[4];
+            int S_box_column = previousValue[3] * 8
+                                + previousValue[2] * 4
+                                    + previousValue[1] * 2
+                                        + previousValue[0];
+            *(*(state + row) + column)
+                = crypto_S_box[S_box_row][S_box_column];
+        }
+}
+\end{verbatim}
+\end{prove}
 \subsubsection{行移位}
 在之前处理数据的时候，我们提到把明文分为4组。每组可以看作一行，每行包括$N_b$个字节。\par
 所谓行移位，就是将各行进行循环移位，不同的行的位移量不同。第一行不移位，第二行左移$C_1$, 第三行左移$C_2$, 第四行左移$C_3$. $C_1, C_2, C_3$都与$N_b$有关。\par
-在解密时，只需要反向移位即可。
+在解密时，只需要反向循环移位即可。\par
+其C程序实现如下：
+\begin{prove}
+\begin{verbatim}
+int shiftBytes[4] = {0, 1, 2, 3};
+
+void ShiftRows(bitset<8> state[4][4], CryptoMode cryptoMode)
+{
+    for (int row = 0; row < 4; row++)
+    {
+        bitset<8> previousRow[4];
+        for (int column = 0; column < 4; column++)
+            previousRow[column] = state[row][column];
+        switch (cryptoMode)
+        {
+            case Enc:
+                for (int column = 0; column < 4; column++)
+                    state[row][column]
+                        = previousRow[(column
+                                       - shiftBytes[row] + 4) % 4];
+                break;
+                
+            case Dec:
+                for (int column = 0; column < 4; column++)
+                    state[row][column]
+                        = previousRow[(column
+                                       + shiftBytes[row]) % 4];
+                break;
+                
+            default:
+                break;
+        }
+    }
+}
+\end{verbatim}
+\end{prove}
 \subsubsection{列混合}
 由于明文被分为4组，每组看作一行，那么对于每列来说，都含有四个元素，且每个元素都属于$\GF\pth{2^8}$. 因此，可以将每列看作$\GF\pth{2^8}$上的多项式。接着，记
 \begin{equation}
@@ -720,13 +835,235 @@ c\pth{x}=\pth{03}_{16}x^3+\pth{01}_{16}x^2+\pth{01}_{16}x+\pth{02}_{16}
 d\pth{x}=\pth{0B}_{16}x^3+\pth{0D}_{16}x^2+\pth{09}_{16}x+\pth{0E}_{16}
 \end{equation}
 
-则在解密运算中，将每列与$d(x)$作$\GF\pth{2^8}$上多项式的模$x^4+1$乘法$\otimes$来输出即可。
+则在解密运算中，将每列与$d(x)$作$\GF\pth{2^8}$上多项式的模$x^4+1$乘法$\otimes$来输出即可。类似地，也有一个对应的矩阵
+\begin{equation}
+\pth{\begin{array}{c}a_0\\a_1\\a_2\\a_3\end{array}}=\pth{\begin{array}{cccc}0e&0b&0d&09\\09&0e&0b&0d\\0d&09&0e&0b\\0b&0d&09&0e\end{array}}\pth{\begin{array}{c}b_0\\b_1\\b_2\\b_3\end{array}}
+\end{equation}
+
+其C程序实现如下（在程序实现中，我们可以直接将$\GF\pth{2^8}$上的运算存储成一张表，且这里只用到了与01, 02, 03, 09, 0b, 0d, 0e的乘法。这里我们省略这些表如\verb`bitset<8> Mul_01[256]`等）：
+\begin{prove}
+\begin{verbatim}
+bitset<8> *M[4][4] = {
+    {Mul_02, Mul_03, Mul_01, Mul_01},
+    {Mul_01, Mul_02, Mul_03, Mul_01},
+    {Mul_01, Mul_01, Mul_02, Mul_03},
+    {Mul_03, Mul_01, Mul_01, Mul_02}
+};
+
+bitset<8> *Inv_M[4][4] = {
+    {Mul_0e, Mul_0b, Mul_0d, Mul_09},
+    {Mul_09, Mul_0e, Mul_0b, Mul_0d},
+    {Mul_0d, Mul_09, Mul_0e, Mul_0b},
+    {Mul_0b, Mul_0d, Mul_09, Mul_0e}
+};
+
+void MixColumns(bitset<8> state[4][4], CryptoMode cryptoMode)
+{
+    bitset<8>* (*crypto_M)[4][4];
+
+    switch (cryptoMode)
+    {
+        case Enc:
+            crypto_M = &M;
+            break;
+            
+        case Dec:
+            crypto_M = &Inv_M;
+            break;
+            
+        default:
+            break;
+    }
+    for (int column = 0; column < 4; column++)
+    {
+        bitset<8> previousColumn[4];
+        for (int row = 0; row < 4; row++)
+            previousColumn[row] = state[row][column];
+        for (int row = 0; row < 4; row++)
+        {
+            state[row][column] = 0;
+            for (int i = 0; i < 4; i++)
+                state[row][column]
+                    ^= *(*(*(*crypto_M + row) + i)
+                        + previousColumn[row].to_ulong());
+        }
+    }
+}
+\end{verbatim}
+\end{prove}
 \subsubsection{密钥加}
-在我们输入密钥之后，首先会通过密钥编排算法，得到若干长度为$N_b$的轮密钥。密钥加即为将轮密钥与当前的状态阵列逐比特异或。解密时再次异或即可。
+在我们输入密钥之后，首先会通过密钥编排算法，得到若干长度为$N_b$的轮密钥。密钥加即为将轮密钥与当前的状态阵列逐比特异或。解密时再次异或即可。\par
+其C程序实现如下：
+\begin{prove}
+\begin{verbatim}
+void AddRoundKey(bitset<8> state[4][4], bitset<32> ki[4])
+{
+    for (int row = 0; row < 4; row++)
+        for (int column = 0; column < 4; column++)
+            for (int bit = 0; bit < 8; bit++)
+                state[row][column][bit]
+                    = ki[row][column * 4 + bit]
+                        ^ state[row][column][bit];
+}
+\end{verbatim}
+\end{prove}
 \subsubsection{轮函数总的步骤}
 在每一轮中，对当前的状态阵列，轮函数依次进行字节代换、行移位、列混合和与当前轮密钥的密钥加，最后输出。\par
 在最后一轮中，不进行列混合。
 \subsection{密钥编排算法}
 之前我们讲到，我们输入的密钥会通过密钥编排算法变成若干长度为$N_b$的轮密钥。密钥编排算法分为密钥扩展和轮密钥选取两个部分。\par
 考虑到每个轮密钥长度都为$N_b$, 假设我们需要进行$N_r$轮，则一共需要$N_b\pth{N_r+1}$长度的密钥。因此，我们首先需要将输入的密钥扩展成对应长度的扩展密钥。\par
-然后，第一轮轮密钥取扩展密钥的第一个$N_b$长度个字，第二轮轮密钥取接下来的$N_b$长度个字，以此类推。
+然后，第一轮轮密钥取扩展密钥的第一个$N_b$长度个字，第二轮轮密钥取接下来的$N_b$长度个字，以此类推。\par
+\subsubsection{密钥扩展算法}
+在密钥扩展算法中，我们需要用到$N_r$个轮常数\verb`Rcon`，以及一些辅助工作，如对密钥的循环移位\verb`RotWord`和对密钥的替换（使用的S盒与之前的是同一个）\verb`SubWord`. 此外，对于不同的$N_r$, 密钥扩展算法也不同。\par
+这里以AES-128为例，其C程序代码如下：
+\begin{prove}
+\begin{verbatim}
+bitset<32> Rcon[10] = {0x01000000, 0x02000000, 0x04000000,
+0x08000000, 0x10000000, 0x20000000, 0x40000000, 0x80000000,
+0x1b000000, 0x36000000};
+
+bitset<32> RotWord(bitset<32> input)
+{
+    bitset<32> output;
+
+    for (int i = 0; i < 32; i++)
+        output[i] = input[(i - 8 + 32) % 32];
+
+    return output;
+}
+
+bitset<32> SubWord(bitset<32> input)
+{
+    bitset<32> output;
+    
+    for (int byte = 0; byte < 4; byte++)
+    {
+        int row = input[8 * byte + 7] * 8
+                    + input[8 * byte + 6] * 4
+                        + input[8 * byte + 5] * 2
+                            + input[8 * byte + 4];
+        int column = input[8 * byte + 3] * 8
+                        + input[8 * byte + 2] * 4
+                            + input[8 * byte + 1] * 2
+                                + input[8 * byte];
+        bitset<8> value = S_box[row][column];
+        for (int bit = 0; bit < 8; bit++)
+            output[8 * byte + bit] = value[bit];
+    }
+    
+    return output;
+}
+
+void KeyExpansion(bitset<8> *key, bitset<32> *w)
+{
+    int Nk = 4;
+    int Nr = 10;
+    
+    for (int word = 0; word < Nk; word++)
+        for (int byte = 0; byte < 4; byte++)
+            for (int bit = 0; bit < 4; bit++)
+                w[word][4 * byte + bit] = key[byte][bit];
+
+    for (int word = Nk; word < 4 * (Nr + 1); word++)
+    {
+        bitset<32> tmp = w[word - 1];
+        if (!word % Nk)
+            tmp = SubWord(RotWord(tmp)) ^ Rcon[word / Nk];
+        w[word] = w[word - Nk] ^ tmp;
+    }
+}
+\end{verbatim}
+\end{prove}
+\subsection{总的加解密过程}
+\subsubsection{加密过程}
+首先，将明文写入状态阵列，密钥变成字节串。然后，求出扩展密钥。接着，对前4个密钥使用密钥加算法。然后，在进行10轮的字节替换、行移位、列混合、密钥加，其中最后一轮不进行列混合。最后，将此时的状态阵列读出为密文。\par
+其C程序代码如下：
+\begin{prove}
+\begin{verbatim}
+bitset<128> AES_128_ENC(bitset<128> plainText, bitset<128> key)
+{
+    bitset<128> cipher;
+    
+    bitset<8> state[4][4];
+    bitToState(plainText, state);
+    
+    bitset<8> keys[16];
+    bitToByte(key, keys);
+    
+    bitset<32> expanedKeys[44];
+    KeyExpansion(keys, expanedKeys);
+    
+    bitset<32> subkeys[4];
+    for (int i = 0; i < 4; i++)
+        subkeys[i] = expanedKeys[i];
+    AddRoundKey(state, subkeys);
+    
+    for (int round = 0; round < 9; round++)
+    {
+        SubByte(state, Enc);
+        ShiftRows(state, Enc);
+        MixColumns(state, Enc);
+        for (int i = 0; i < 4; i++)
+            subkeys[i] = expanedKeys[i + 4 + round * 4];
+        AddRoundKey(state, subkeys);
+    }
+    
+    SubByte(state, Enc);
+    ShiftRows(state, Enc);
+    for (int i = 0; i < 4; i++)
+        subkeys[i] = expanedKeys[i + 40];
+    AddRoundKey(state, subkeys);
+    
+    stateToBit(state, cipher);
+
+    return cipher;
+}
+\end{verbatim}
+\end{prove}
+\subsubsection{解密算法}
+首先，将密文写入状态阵列，密钥变成字节串。然后，求出扩展密钥。接着，对最后4个密钥使用密钥加算法。然后，在进行10轮的字节替换、行移位、密钥加、列混合，其中最后一轮不进行列混合。最后，将此时的状态阵列读出为明文。\par
+解密与加密的区别在于：轮密钥的使用顺序恰好相反（但每一轮内的顺序是相同的），以及在每轮步骤内，先进行密钥加再列混合，而不是像明文一样先列混合再密钥加。\par
+其C程序代码如下：
+\begin{prove}
+\begin{verbatim}
+bitset<128> AES_128_DEC(bitset<128> cipher, bitset<128> key)
+{
+    bitset<128> plainText;
+    
+    bitset<8> state[4][4];
+    bitToState(cipher, state);
+    
+    bitset<8> keys[16];
+    bitToByte(key, keys);
+    
+    bitset<32> expanedKeys[44];
+    KeyExpansion(keys, expanedKeys);
+    
+    bitset<32> subkeys[4];
+    for (int i = 0; i < 4; i++)
+        subkeys[i] = expanedKeys[40 + i];
+    AddRoundKey(state, subkeys);
+    
+    for (int round = 0; round < 9; round++)
+    {
+        SubByte(state, Dec);
+        ShiftRows(state, Dec);
+        for (int i = 0; i < 4; i++)
+            subkeys[i] = expanedKeys[i + 36 - round * 4];
+        AddRoundKey(state, subkeys);
+        MixColumns(state, Dec);
+    }
+    
+    SubByte(state, Dec);
+    ShiftRows(state, Dec);
+    for (int i = 0; i < 4; i++)
+        subkeys[i] = expanedKeys[i];
+    AddRoundKey(state, subkeys);
+    
+    stateToBit(state, plainText);
+
+    return plainText;
+}
+\end{verbatim}
+\end{prove}
