@@ -10,10 +10,12 @@
 为了实现扩散，常用的方法是置换。也就是说，把输入的一部分与另一部分进行交换，然后输出。置换中最常用的结构为P盒。其接受$m$位二进制输入，$m$位二进制输出。其输出是把输入的比特按一定规则打乱顺序后输出。\par
 为了实现混淆，常用的方法是代换。而代换中最常用的结构为S盒。其接受$m$位二进制输入，$n$位二进制输出。因此，其输入共有$2^m$中，输出共有$2^n$种。我们可以把S盒理解成一种查找表。对于$2^m$个输入中的每一种输入，我们可以在这个表中查找到一个$n$位的输出，而且S盒需要保证不同的输入对应的输出也不同。从编程上，我们也可以将此理解成一个长度为$2^m$的数组，它的每个元素为$n$比特的数字。因此，其所占的空间为$n2^m$.
 \section{分组密码的定义}
+事实上，在非对称密码发展之前，大多数著名的密码体系，其核心都是扩散与混淆。但是，在我们上述谈到扩散与混淆的时候，有一个值得注意的地方：实现扩散与混淆的器件，即P盒与S盒，其接受的都是固定长度的输入。这与我们之前谈到的流密码不同，流密码的输入可以是任意长度的。因此，为了更好地实现扩散与混淆，我们引入了分组密码。\par
 分组密码就是一个较好地实现扩散与混淆的密码系统。它的核心思想是分组。首先，将明文分成若干个等长的组，然后对每个组利用密钥依次进行加密，生成等长的密文组。\par
-因此，对于分组密码，我们要研究的有：每组内如何根据输入和密钥进行加密，以及各组的输入和密钥是什么。最简单的方法是各组的输入是之前分好的明文的各个分组，密钥是相同的密钥。但是，也可以使用相对复杂的方法，使加密变得更加复杂。\par
+对于分组密码，我们要研究的有：每组内如何根据输入和密钥进行加密，以及各组之间的关系。最简单的方法是各组的输入是之前分好的明文的各个分组，密钥是相同的密钥。但是，也可以使用相对复杂的方法，使加密变得更加复杂（参见“分组密码的运行模式”一节）。\par
 由于密文是明文按组生成的，因此，分组密码具有扩散性；而通过采用特别设定的S盒，也可以实现混淆性。\par
-这里我们要注意的是，密码学中研究的分组密码，并不仅仅是将明文分组的加密方式。我们之前提到的同步密码，实际上也可以看作是将明文分组进行加密，每个组的长度为其伪随机密钥流的周期。但是，同步流密码依然是逐比特加密，因此，失去了扩散性。所以，只有这个组的每个比特都参与到了密文的生成中的加密方法，才是我们这一章研究的重点。
+这里我们要注意的是，密码学中研究的分组密码，并不仅仅是将明文分组的加密方式。我们之前提到的同步密码，实际上也可以看作是将明文分组进行加密，每个组的长度为其伪随机密钥流的周期。但是，同步流密码依然是逐比特加密，因此，失去了扩散性。所以，只有这个组的每个比特都参与到了密文的生成中的加密方法，才是我们这一章研究的重点。\par
+此外，在讨论为分组密码的运行模式，即各组之间的联系之后，我们接下来讨论的DES, IDEA, AES等都是每组内的加密方法。由于分好了组，所以这些密码体制有一个特点，即明文或者密文是固定长度的。
 \section{分组密码的设计方法}
 之前讲到，对于分组密码，我们要研究的有：每组内如何根据输入和密钥进行加密，以及各组的输入和密钥是什么。本节讨论的是每组内的加密方法。也就是说，在本节内，我们提到的“输入”、“明文”等，都是指被分好组以后的每个组的输入、明文。\par
 常见的分组密码有两种核心设计方法：费斯妥密码与SP网络。它们都有一个相同的特点：需要将同一个步骤重复多轮。而在加密过程中，任何核心步骤都是同时需要明文和密钥的信息的。因此，为了保证可靠性，每一轮步骤的输入和密钥都是不一样的。步骤的输入可以根据上一轮的输出来改变，而密钥怎么办呢？这时，就需要\textbf{子密钥}。所谓子密钥，就是根据密钥，生成的不同序列。比如说，某种方法需要16轮步骤，那么，我们就应设计一种算法，使密钥能生成16个子密钥。
@@ -31,7 +33,7 @@
 可以用下图形象地理解费斯妥密码（图源wiki）：
 \begin{figure}[H]
     \centering
-    \includegraphics[scale=0.8]{Feistel.eps}
+    \includegraphics[scale=0.8]{chapters/chapter_3/Feistel.eps}
 \end{figure}
 
 值得注意到的一点是，在最后一次输出的时候，不再进行交换，也就是说，输出的并不是$\pth{L_{n+1}, R_{n+1}}$, 而是$\pth{R_{n+1}, L_{n+1}}$.
@@ -40,7 +42,7 @@ SP网络每轮接受到输入之后，首先，将输入与该轮的子密钥进
 可以通过下图形象地理解SP网络（图源wiki）：
 \begin{figure}[H]
     \centering
-    \includegraphics[scale=0.5]{SPN.png}
+    \includegraphics[scale=0.5]{chapters/chapter_3/SPN.png}
 \end{figure}
 \section{分组密码的运行模式}
 上一节讨论了在对明文分好组后，每组内常见的加密方式。本节讨论的，则是组与组之间输入和输出的关系。在这里，假设将明文$M$分成了$m_1, m_2, \ldots, m_n$共$n$个等长的组，在每组内，加密算法为$\E{k}{m}$, 解密算法为$\D{k}{c}$.
@@ -53,7 +55,19 @@ c_i=\E{k}{m_i}
 其加密过程如图所示（图源wiki）：
 \begin{figure}[H]
 \centering
-\includegraphics[scale=1]{ECB.eps}
+\includegraphics[scale=1]{chapters/chapter_3/ECB.eps}
+\end{figure}
+
+ECB模式极不安全。比如说，我想用ECB模式的AES密码体系加密下图：
+\begin{figure}[H]
+\centering
+\includegraphics[scale=0.6]{chapters/chapter_3/ECB_origin.png}
+\end{figure}
+
+结果为
+\begin{figure}[H]
+\centering
+\includegraphics[scale=0.4]{chapters/chapter_3/ECB_result.jpeg}
 \end{figure}
 \subsection{密码分组链接模式(CBC)}
 对于每组，其加密的输入为当前明文组与前一密文组的异或。也就是说，
@@ -65,7 +79,7 @@ c_i=\E{k}{m_i\oplus c_{i-1}}=\E{k}{m_i\oplus \E{k}{m_{i-1}}}
 其加密过程如图所示（图源wiki）：
 \begin{figure}[H]
 \centering
-\includegraphics[scale=1]{CBC.eps}
+\includegraphics[scale=1]{chapters/chapter_3/CBC.eps}
 \end{figure}
 \subsection{密码反馈模式(CFB)}
 CFB模式需要一个移位寄存器。同时，CFB模式也提供了一个可选的参数$j$, 通常取$j=8$. 其过程如下：\par
@@ -83,13 +97,13 @@ S_i=\pth{\pth{S_{i-1} << x}+c_i}\bmod{64}
 如果忽略移位寄存器，其大致的工作原理可由下图表示（图源wiki）：
 \begin{figure}[H]
 \centering
-\includegraphics[scale=1]{CFB.eps}
+\includegraphics[scale=1]{chapters/chapter_3/CFB.eps}
 \end{figure}
 \subsection{输出反馈模式(OFB)}
 OFB模式与CFB模式极其类似，区别仅在于每组向移位寄存器内的输入为上一组内与明文异或之前的输出。如下图所示（图源wiki）：
 \begin{figure}[H]
 \centering
-\includegraphics[scale=1]{OFB.eps}
+\includegraphics[scale=1]{chapters/chapter_3/OFB.eps}
 \end{figure}
 
 从图中可以看到，每组之间传递的数据与明文无关。因此，在OFB中，明文出错只会影响该组的密文，之后的密文都不会被影响。
@@ -98,7 +112,7 @@ OFB模式与CFB模式极其类似，区别仅在于每组向移位寄存器内�
 其过程如图所示（图源wiki）：
 \begin{figure}[H]
 \centering
-\includegraphics[scale=1]{CTR.eps}
+\includegraphics[scale=1]{chapters/chapter_3/CTR.eps}
 \end{figure}
 
 根据上图，我们可以发现CTR的独一无二的好处：可以并行加密。其每组加密不需要上组的任何信息，只需要该组对应的计数器值即可。
@@ -587,7 +601,7 @@ $m_1\oplus m_2$即将两个16位的二进制串逐比特异或。
 和其他分组密码类似，IDEA也是采用了多次重复轮结构的步骤。其轮结构如图所示（图源wiki）：
 \begin{figure}[H]
 \centering
-\includegraphics[scale=0.5]{IDEA_round.eps}
+\includegraphics[scale=0.5]{chapters/chapter_3/IDEA_round.eps}
 \end{figure}
 
 在每一轮中，一共需要输入6个16位的子密钥，并且输入为4组16位的二进制串，输出也为4组16位的二进制串。
@@ -596,91 +610,23 @@ IDEA加密算法接受64位明文和128位密钥。对于密钥，将其通过�
 首先，将64位明文分成4组等长的子串，然后输入轮结构中。在经过8轮轮结构后，将输出的结构通过如图所示的输出变换（图源wiki），得到密文。
 \begin{figure}[H]
 \centering
-\includegraphics[scale=0.5]{IDEA_output.png}
+\includegraphics[scale=0.5]{chapters/chapter_3/IDEA_output.png}
 \end{figure}
 
 而子密钥的生成算法则相对比较直接：\par
 前8个子密钥$Z_1, Z_2, \ldots, Z_8$直接在加密密钥中依次选取。然后，将加密密钥循环左移$52$位，再依次取接下来的8个子密钥。以此类推，直到52个子密钥全部生成。
 \section{AES}
-\subsection{数学基础}
-\subsubsection{有限域$\GF\pth{2^8}$}
-我们之前在讲流密码的时候提到过有限域$\GF\pth{2}$. 在这里，我们就要正式地引入域的概念：\par
-所谓域，就是可交换的除环。更确切地说：
-\begin{Definition}
-对于集合$F$和它上面的两个运算$+, \cdot$, 如果满足如下性质：
-\begin{enumerate}
-    \item 加法和乘法的封闭性\par
-    $\forall a, b\in F, a+b\in F, a\cdot b\in F$
-    \item 加法和乘法的结合律\par
-    $\forall a, b, c\in F, \pth{a+b}+c=a+\pth{b+c}, \pth{a\cdot b}\cdot c=a\cdot\pth{b\cdot c}$
-    \item 加法和乘法的交换律\par
-    $\forall a, b\in F, a+b=b+a, a\cdot b=b\cdot a$
-    \item 乘法对加法的分配率\par
-    $\forall a, b, c\in F, a\cdot\pth{b+c}=a\cdot b+a\cdot c$
-    \item 加法单位元\par
-    $\exists a\in F, \mathrm{s.t.}\, \forall b\in F, a+b=b+a=b$\par
-    常将加法单位元$a$记作$0$
-    \item 乘法单位元\par
-    $\exists a\in F, \mathrm{s.t.}\, \forall b\in F\text{且}b\neq 0, a\cdot b=b\cdot a=b$\par
-    常将乘法单位元$a$记作$1$
-    \item 加法逆元\par
-    $\forall a\in F,\exists -a\in F, \mathrm{s.t.}\, a+\pth{-a}=\pth{-a}+a=0$
-    \item 乘法逆元\par
-    $\forall a\in F\text{且}a\neq 0, \exists a^{-1}\in F, \mathrm{s.t.}\, a\cdot a^{-1}=a^{-1}\cdot a=0$
-\end{enumerate}
-则称$F$和它上面的两个运算$+, \cdot$构成一个域。
-\end{Definition}
-
-如果$F$内的元素个数有限，为$n$个，则称$F$为有限域，记作$\GF\pth{n}$. 在AES中，我们主要研究有限域$\GF\pth{2^8}$.\par
-熟悉抽象代数的同学可能会知道，对于任意素数$p$和正整数$n$, 所有有限域$\GF\pth{p^n}$都是同构的。因此，我们可以使用一个尽可能简单的表示方法来研究$\GF\pth{2^8}$.\par
-我们考虑集合$\ext F=\pth{\sum_{i=0}^7a_ix^i\mid a_i\in\GF\pth{2}}$为一个多项式的集合。我们想通过定义其上的加法与乘法使其变成一个$\GF\pth{2^8}$. 这时，就需要我们之前提到的$\GF\pth{2}$上的多项式。为了方便叙述，我们记$G$为$\GF\pth{2}$上的多项式组成的集合，定义$\oplus$和$\odot$为$G$上的加法与乘法，$+$和$\cdot$为$F$上的加法与乘法。\par
-如果定义其元素加法为：$\ext\forall p_1=\sum_{i=0}^7a_ix^i\in F, p_2=\sum_{i=0}^7b_ix^i\in F$:
-\begin{equation}
-p_1+p_2=\sum_{i=0}^7\pth{a_i+b_i}x^i
-\end{equation}
-其中$a_i+b_i$是$\GF\pth{2}$上的加法，也就是模2加法，或者说是异或。因此，$F$上的加法与$G$上的加法相同。\par
-而为了定义其元素乘法，首先引入一个8次不可约多项式
-\begin{equation}
-m\pth{x}=x^8+x^4+x^3+x+1
-\end{equation}
-
-同时，定义$G$上的取模运算为：对于$p_1, p_2\in G$, 如果存在多项式$q\in G, r\in G$, 使得$p_1=q\odot p_2\oplus r$, 且$r$的次数低于$p_2$, 则记作$p_1\bmod{p_2}=r$.\par
-接着，我们就可以定义$F$上的乘法为：$\ext\forall p_1=\sum_{i=0}^7a_ix^i\in F, p_2=\sum_{i=0}^7b_ix^i\in F$:
-\begin{equation}
-p_1\cdot p_2= \pth{p_1\odot p_2}\bmod{m\pth{x}}
-\end{equation}
-
-可以证明，$F$对$+, \cdot$构成一个有限域$\GF\pth{2^8}$.\par
-此外，我们还需要在$F$上定义一个一元运算，称为$x$乘法：对于$p\in F$, 记
-\begin{equation}
-\mathrm{xtime}\pth{p}=x\cdot p
-\end{equation}
-
-这里需要强调的是，虽然我们用多项式来表示$\GF\pth{2^8}$, 但这并不意味着$\GF\pth{2^8}$的元素就是多项式。我们不在意它的元素是什么，我们关注的是它具有$2^8$个元素，并且它上面的乘法和加法表符合我们之前利用多项式定义的乘法和加法表。
-\subsubsection{$\GF\pth{2^8}$上的多项式}
-类似于我们之前在流密码中讲到的$\GF\pth{2}$上的多项式，在我们定义了$\GF\pth{2^8}$的加法与乘法之后，就可以定义$\GF\pth{2^8}$上的多项式了。但是在AES中，与$\GF\pth{2}$上的多项式不同的是，$\GF\pth{2^8}$上的多项式为系数属于$\GF\pth{2^8}$且次数小于4的多项式。即集合$\ext\brace{\sum_{i=0}^3a_ix^i\mid a_i\in\GF\pth{2^8}}$.\par
-同时，我们定义$\GF\pth{2^8}$上的多项式的模$x^4+1$乘法$\otimes$. 即：
-\begin{equation}
-p_1\otimes p_2=\pth{p_1\cdot p_2}\bmod{x^4+1}
-\end{equation}
-其中$\cdot$是$\GF\pth{2^8}$上的多项式的普通乘法。\par
-这里介绍一个定理
-\begin{theorem}
-$\GF\pth{2^8}$上的多项式$a_3x^3+a_2x^2+a_1x+a_0$是模$x^4+1$可逆的，当且仅当矩阵
-\[\pth{\begin{array}{cccc}a_0&a_3&a_2&a_1\\a_1&a_0&a_3&a_2\\a_2&a_2&a_0&a_3\\a_3&a_2&a_1&a_0\end{array}}\]
-在$\GF\pth{2^8}$上是可逆的。
-\end{theorem}
 \subsection{输入与输出}
 AES密码接受的明文与密钥的长度可独立选择128位、192位或256位。这些选择之间的区别仅仅在于加密运算的轮数以及子密钥的调度不同。但是在AES密码标准中，明文长度固定为128位，密钥长度可以选择为128, 192或256位，分别叫做AES-128, AES-192和AES-256.\par
-在处理过程中，我们对明文和密钥进一步分组。AES密码的每个步骤的处理单位是一个“字节”，即8个比特。因此，我们将明文和密钥分成每组长度为8比特的分组，每个8比特的明文分组称为一个“状态”。由于一个字节由8个二进制比特组成，所以一个字节总共有$2^8$种。因此，可以将一个字节看作$\GF\pth{2^8}$的元素。\par
+在处理过程中，我们对明文和密钥进一步分组。AES密码的每个步骤的处理单位是一个“字节”，即8个比特。因此，我们将明文和密钥分成每组长度为8比特的分组，每个8比特的明文分组称为一个“状态”。\par
 对于由字节组成的明文，我们第二次进行分组，使其分成4个等长的分组，记明文的每个分组的长度为$N_b$ (在实际操作中明文总是128位，因此$N_b=4$). 此外，我们也记以字节为单位的密钥的长度除以$4$为$N_k$ ($N_k$的可能取值为$4, 6, 8$). 我们如果假定由字节组成的明文是一个长度为$4N_b$的数列$\{M_n\}$, 那么，我们可以按下表的顺序填充分组：
 \begin{table}[H]
 \centering
 \begin{tabular}{c|c|c|c}\hline
-$M_0$&$M_4$&$\cdots$&$M_{4\pth{N_b}-3}$\\\hline
-$M_1$&$M_5$&$\cdots$&$M_{4\pth{N_b}-2}$\\\hline
-$M_3$&$M_6$&$\cdots$&$M_{4\pth{N_b}-1}$\\\hline
-$M_4$&$M_7$&$\cdots$&$M_{4\pth{N_b}}$\\\hline
+$M_0$&$M_4$&$\cdots$&$M_{4N_b-3}$\\\hline
+$M_1$&$M_5$&$\cdots$&$M_{4N_b-2}$\\\hline
+$M_3$&$M_6$&$\cdots$&$M_{4N_b-1}$\\\hline
+$M_4$&$M_7$&$\cdots$&$M_{4N_b}$\\\hline
 \end{tabular}
 \end{table}
 
@@ -715,33 +661,12 @@ void stateToBit(bitset<8> state[4][4], bitset<128> &output)
 }
 \end{verbatim}
 \end{prove}
-
 \subsection{轮函数}
 AES的轮函数由4个计算部件组成，分别为字节代换(ByteSub), 行移位(ShiftRow), 列混合(MixColumn), 密钥加(AddRoundKey).
 \subsubsection{字节代换}
-字节代换分为两步：
-\begin{enumerate}
-    \item 将字节看作$\GF\pth{2^8}$上的元素，将其映射到自己的乘法逆元。全0字节映射到自己。
-    \item 接着，对字节作以下$\GF\pth{2}$上的运算，输出$\pth{y_0, y_1, \ldots ,y_7}$:
-    \begin{equation}
-    \pth{\begin{array}{c}y_0\\y_1\\y_2\\y_3\\y_4\\y_5\\y_6\\y_7\end{array}}=\pth{
-\begin{array}{cccccccc}
-1     & 0     & 0     & 0     & 1     & 1     & 1     & 1 \\
-1     & 1     & 0     & 0     & 0     & 1     & 1     & 1 \\
-1     & 1     & 1     & 0     & 0     & 0     & 1     & 1 \\
-1     & 1     & 1     & 1     & 0     & 0     & 0     & 1 \\
-1     & 1     & 1     & 1     & 1     & 0     & 0     & 0 \\
-0     & 1     & 1     & 1     & 1     & 1     & 0     & 0 \\
-0     & 0     & 1     & 1     & 1     & 1     & 1     & 0 \\
-0     & 0     & 0     & 1     & 1     & 1     & 1     & 1 \\
-\end{array}%
-}\pth{\begin{array}{c}x_0\\x_1\\x_2\\x_3\\x_4\\x_5\\x_6\\x_7\end{array}}+\pth{\begin{array}{c}1\\1\\0\\0\\0\\1\\1\\0\end{array}}
-    \end{equation}
-\end{enumerate}
-
-上述这两个步骤可以看作一个8位到8位的S盒。因此，可以用一张表来描述，然后在使用时直接查表即可。 \par
-在解密时，直接用ByteSub的逆表即可，\par
-其C程序实现如下（省略了加密时的表\verb`bitset<8> S_box[16][16]`和解密时的表\verb`bitset<8> Inv_S_Box[16][16]`）：
+字节代换可以看作一个128位到128位的S盒。其接受输入状态阵列，然后对状态阵列实现S盒的操作。\par
+在C程序实现里，加密过程中，S盒为\verb`bitset<8> S_box[16][16]`; 解密过程中，S盒为\verb`bitset<8> Inv_S_Box[16][16]`. 这两个S盒的值在AES中是固定的，其生成方式可以看后面的数学论证部分。\par
+其C程序实现如下：
 \begin{prove}
 \begin{verbatim}
 void SubByte(bitset<8> state[4][4], CryptoMode cryptoMode)
@@ -820,27 +745,19 @@ void ShiftRows(bitset<8> state[4][4], CryptoMode cryptoMode)
 \end{verbatim}
 \end{prove}
 \subsubsection{列混合}
-由于明文被分为4组，每组看作一行，那么对于每列来说，都含有四个元素，且每个元素都属于$\GF\pth{2^8}$. 因此，可以将每列看作$\GF\pth{2^8}$上的多项式。接着，记
-\begin{equation}
-c\pth{x}=\pth{03}_{16}x^3+\pth{01}_{16}x^2+\pth{01}_{16}x+\pth{02}_{16}
-\end{equation}
-其中$\pth{03}_{16}, \pth{01}_{16}, \pth{02}_{16}$都是用两个16进制数表示的8比特二进制串。\par
-然后，对于每列对应的$\GF\pth{2^8}$上的多项式，将其与$c\pth{x}$作$\GF\pth{2^8}$上多项式的模$x^4+1$乘法$\otimes$来输出. 即对于输入为$a_0a_1a_2a_3$, 其输出$b_0b_1b_2b_3$的计算公式为
+该步骤是对状态阵列的每一列进行变换。为了方便我们理解以及后面的数学论证，我们将这一步理解成矩阵乘法。由于每一列共有4个元素，因此，我们可以把它看作一个四维列向量$(a_0, a_1, a_2, a_3)^{\mathrm{T}}$. 其输出也为4位列向量$(b_0, b_1, b_2, b_3)^{\mathrm{T}}$.\par
+在加密过程中，其计算方法为
 \begin{equation}
 \pth{\begin{array}{c}b_0\\b_1\\b_2\\b_3\end{array}}=\pth{\begin{array}{cccc}02&03&01&01\\01&02&03&01\\01&01&02&03\\03&01&01&02\end{array}}\pth{\begin{array}{c}a_0\\a_1\\a_2\\a_3\end{array}}
 \end{equation}
-其中的运算作$\GF\pth{2^8}$上的运算。\par
-而通过数学上的计算可知，如果记
-\begin{equation}
-d\pth{x}=\pth{0B}_{16}x^3+\pth{0D}_{16}x^2+\pth{09}_{16}x+\pth{0E}_{16}
-\end{equation}
 
-则在解密运算中，将每列与$d(x)$作$\GF\pth{2^8}$上多项式的模$x^4+1$乘法$\otimes$来输出即可。类似地，也有一个对应的矩阵
+在解密过程中，其计算方法为
 \begin{equation}
 \pth{\begin{array}{c}a_0\\a_1\\a_2\\a_3\end{array}}=\pth{\begin{array}{cccc}0e&0b&0d&09\\09&0e&0b&0d\\0d&09&0e&0b\\0b&0d&09&0e\end{array}}\pth{\begin{array}{c}b_0\\b_1\\b_2\\b_3\end{array}}
 \end{equation}
 
-其C程序实现如下（在程序实现中，我们可以直接将$\GF\pth{2^8}$上的运算存储成一张表，且这里只用到了与01, 02, 03, 09, 0b, 0d, 0e的乘法。这里我们省略这些表如\verb`bitset<8> Mul_01[256]`等）：
+这里要特别指出的是，在矩阵相乘时，每一项之间的乘法并不是我们平时用到的十进制乘法。这种乘法遵循特定的乘法表。在C程序实现中，我们发现，只需要使用与01, 02, 03, 09, 0b, 0d, 0e的乘法。因此，对于这7个数，我们各有一张长度为256的表，用于与一个字节对应的比特（共$2^8=256$种）相乘（$a_0, a_1, a_2, a_3$都是一个字节）的结果。\par
+其C程序实现如下：
 \begin{prove}
 \begin{verbatim}
 bitset<8> *M[4][4] = {
@@ -1023,7 +940,7 @@ bitset<128> AES_128_ENC(bitset<128> plainText, bitset<128> key)
 \end{prove}
 \subsubsection{解密算法}
 首先，将密文写入状态阵列，密钥变成字节串。然后，求出扩展密钥。接着，对最后4个密钥使用密钥加算法。然后，在进行10轮的字节替换、行移位、密钥加、列混合，其中最后一轮不进行列混合。最后，将此时的状态阵列读出为明文。\par
-解密与加密的区别在于：轮密钥的使用顺序恰好相反（但每一轮内的顺序是相同的），以及在每轮步骤内，先进行密钥加再列混合，而不是像明文一样先列混合再密钥加。\par
+解密与加密的区别在于：轮密钥的使用顺序恰好相反（但每一轮内的顺序是相同的）。\par
 其C程序代码如下：
 \begin{prove}
 \begin{verbatim}
@@ -1049,10 +966,10 @@ bitset<128> AES_128_DEC(bitset<128> cipher, bitset<128> key)
     {
         SubByte(state, Dec);
         ShiftRows(state, Dec);
+        MixColumns(state, Dec);
         for (int i = 0; i < 4; i++)
             subkeys[i] = expanedKeys[i + 36 - round * 4];
         AddRoundKey(state, subkeys);
-        MixColumns(state, Dec);
     }
     
     SubByte(state, Dec);
@@ -1067,3 +984,154 @@ bitset<128> AES_128_DEC(bitset<128> cipher, bitset<128> key)
 }
 \end{verbatim}
 \end{prove}
+\subsection{数学基础}
+\subsubsection{有限域$\GF\pth{2^8}$}
+我们之前在讲流密码的时候提到过有限域$\GF\pth{2}$. 在这里，我们就要正式地引入域的概念：\par
+所谓域，就是可交换的除环。更确切地说：
+\begin{Definition}
+对于集合$F$和它上面的两个运算$+, \cdot$, 如果满足如下性质：
+\begin{enumerate}
+    \item 加法和乘法的封闭性\par
+    $\forall a, b\in F, a+b\in F, a\cdot b\in F$
+    \item 加法和乘法的结合律\par
+    $\forall a, b, c\in F, \pth{a+b}+c=a+\pth{b+c}, \pth{a\cdot b}\cdot c=a\cdot\pth{b\cdot c}$
+    \item 加法和乘法的交换律\par
+    $\forall a, b\in F, a+b=b+a, a\cdot b=b\cdot a$
+    \item 乘法对加法的分配率\par
+    $\forall a, b, c\in F, a\cdot\pth{b+c}=a\cdot b+a\cdot c$
+    \item 加法单位元\par
+    $\exists a\in F, \mathrm{s.t.}\, \forall b\in F, a+b=b+a=b$\par
+    常将加法单位元$a$记作$0$
+    \item 乘法单位元\par
+    $\exists a\in F, \mathrm{s.t.}\, \forall b\in F\text{且}b\neq 0, a\cdot b=b\cdot a=b$\par
+    常将乘法单位元$a$记作$1$
+    \item 加法逆元\par
+    $\forall a\in F,\exists -a\in F, \mathrm{s.t.}\, a+\pth{-a}=\pth{-a}+a=0$
+    \item 乘法逆元\par
+    $\forall a\in F\text{且}a\neq 0, \exists a^{-1}\in F, \mathrm{s.t.}\, a\cdot a^{-1}=a^{-1}\cdot a=0$
+\end{enumerate}
+则称$F$和它上面的两个运算$+, \cdot$构成一个域。
+\end{Definition}
+
+如果$F$内的元素个数有限，为$n$个，则称$F$为有限域，记作$\GF\pth{n}$. 在AES中，我们主要研究有限域$\GF\pth{2^8}$.\par
+熟悉抽象代数的同学可能会知道，对于任意素数$p$和正整数$n$, 所有有限域$\GF\pth{p^n}$都是同构的。因此，我们可以使用一个尽可能简单的表示方法来研究$\GF\pth{2^8}$.\par
+我们考虑集合$\ext F=\brace{\sum_{i=0}^7a_ix^i\mid a_i\in\GF\pth{2}}$为一个多项式的集合。我们想通过定义其上的加法与乘法使其变成一个$\GF\pth{2^8}$. 这时，就需要我们之前提到的$\GF\pth{2}$上的多项式。为了方便叙述，我们记$G$为$\GF\pth{2}$上的多项式组成的集合，定义$\oplus$和$\odot$为$G$上的加法与乘法，$+$和$\cdot$为$F$上的加法与乘法。\par
+如果定义其元素加法为：$\ext\forall p_1=\sum_{i=0}^7a_ix^i\in F, p_2=\sum_{i=0}^7b_ix^i\in F$:
+\begin{equation}
+p_1+p_2=\sum_{i=0}^7\pth{a_i+b_i}x^i
+\end{equation}
+其中$a_i+b_i$是$\GF\pth{2}$上的加法，也就是模2加法，或者说是异或。因此，$F$上的加法与$G$上的加法相同。\par
+而为了定义其元素乘法，首先引入一个8次不可约多项式
+\begin{equation}
+m\pth{x}=x^8+x^4+x^3+x+1
+\end{equation}
+
+同时，定义$G$上的取模运算为：对于$p_1, p_2\in G$, 如果存在多项式$q\in G, r\in G$, 使得$p_1=q\odot p_2\oplus r$, 且$r$的次数低于$p_2$, 则记作$p_1\bmod{p_2}=r$.\par
+接着，我们就可以定义$F$上的乘法为：$\ext\forall p_1=\sum_{i=0}^7a_ix^i\in F, p_2=\sum_{i=0}^7b_ix^i\in F$:
+\begin{equation}
+p_1\cdot p_2= \pth{p_1\odot p_2}\bmod{m\pth{x}}
+\end{equation}
+
+可以证明，$F$对$+, \cdot$构成一个有限域$\GF\pth{2^8}$.\par
+此外，我们还需要在$F$上定义一个一元运算，称为$x$乘法：对于$p\in F$, 记
+\begin{equation}
+\mathrm{xtime}\pth{p}=x\cdot p
+\end{equation}
+
+这里需要强调的是，虽然我们用多项式来表示$\GF\pth{2^8}$, 但这并不意味着$\GF\pth{2^8}$的元素就是多项式。我们不在意它的元素是什么，我们关注的是它具有$2^8$个元素，并且它上面的乘法和加法表符合我们之前利用多项式定义的乘法和加法表。
+\subsubsection{$\GF\pth{2^8}$上的多项式}
+类似于我们之前在流密码中讲到的$\GF\pth{2}$上的多项式，在我们定义了$\GF\pth{2^8}$的加法与乘法之后，就可以定义$\GF\pth{2^8}$上的多项式了。但是在AES中，与$\GF\pth{2}$上的多项式不同的是，$\GF\pth{2^8}$上的多项式为系数属于$\GF\pth{2^8}$且次数小于4的多项式。即集合$\ext\brace{\sum_{i=0}^3a_ix^i\mid a_i\in\GF\pth{2^8}}$.\par
+同时，我们定义$\GF\pth{2^8}$上的多项式的模$x^4+1$乘法$\otimes$. 即：
+\begin{equation}
+p_1\otimes p_2=\pth{p_1\cdot p_2}\bmod{\pth{x^4+1}}
+\end{equation}
+其中$\cdot$是$\GF\pth{2^8}$上的多项式的普通乘法。\par
+此外，如果我们假设$\ext p_1=\sum_{i=0}^3a_ix^i, p_2=\sum_{i=0}^3b_ix^i$, 那么
+\begin{align*}
+p_1\cdot p_2&=\sum_{i=0}^3\sum_{j=0}^3a_ib_jx^{i+j}\\
+&=a_0b_0+\pth{a_0b_1+a_1b_0}x+\pth{a_0b_2+a_1b_1+a_2b_0}x^2+\pth{a_0b_3+a_1b_2+a_2b_1+a_3b_0}x^3\\
+&+\pth{a_1b_3+a_2b_2+a_3b_1}x^4+\pth{a_2b_3+a_3b_2}x^5+a_3b_3x^6
+\end{align*}
+
+如果我们记$t_{ij}$为$p_1\cdot p_2$中$x^i$的系数中，$b_j$前面的系数（如$t_{00}=a_0, t_{10}=a_1$），那么
+\begin{align*}
+p_1\otimes p_2&=\pth{\sum_{i=0}^6\pth{\sum_{j=0}^3t_{ij}b_j}x^i}\bmod{\pth{x^4+1}}\\
+&=\sum_{i=0}^3\pth{\sum_{j=0}^3t_{ij}b_j}x^i+\sum_{j=4}^6\pth{\sum_{j=0}^3t_{ij}b_j}\pth{x^j\bmod{\pth{x^4+1}}}
+\end{align*}
+
+如果记$\ext x^i\bmod{\pth{x^4+1}}=\sum_{j=0}^3{\alpha_{ij}x^j}$, 同时如果我们假设$\ext p_1\otimes p_2=\sum_{i=0}^3c_ix^i$, 那么
+\begin{align*}
+\sum_{i=0}^3c_ix^i&=\sum_{i=0}^3\pth{\sum_{j=0}^3t_{ij}b_j}x^i+\sum_{k=4}^6\pth{\sum_{m=0}^3t_{km}b_m}\pth{\sum_{l=0}^3{\alpha_{kl}x^l}}\\
+&=\sum_{i=0}^3\pth{\sum_{j=0}^3t_{ij}b_j}x^i+\sum_{l=0}^3\pth{\sum_{k=4}^6\pth{\sum_{m=0}^3t_{km}b_m}\alpha_{kl}}x^l\\
+&=\sum_{i=0}^3\pth{\sum_{j=0}^3\pth{t_{ij}+\sum_{k=4}^6t_{kj}\alpha_{ki}}b_j}x^i
+\end{align*}
+
+因此
+\begin{equation}
+c_i=\sum_{j=0}^3\pth{t_{ij}+\sum_{k=4}^6t_{kj}\alpha_{ki}}b_j
+\end{equation}
+
+注意到这个式子中，$t_{ij}, t_{kj}, \alpha_{ki}$都与$p_2$无关，因此可以提前算出来。从而，我们可以得到：
+\begin{theorem}
+对于多项式$p_1=a_0+a_1x+a_2x^2+a_3x^3$和$p_2=b_0+b_1x+b_2x^2+b_3x^3$, 若$p_1\otimes p_2=c_0+c_1x+c_2x^2+c_3x^3$, 则
+\begin{equation}
+\pth{\begin{array}{c}c_0\\c_1\\c_2\\c_3\end{array}}=\pth{\begin{array}{cccc}a_0&a_3&a_2&a_1\\a_1&a_0&a_3&a_2\\a_2&a_2&a_0&a_3\\a_3&a_2&a_1&a_0\end{array}}\pth{\begin{array}{c}b_0\\b_1\\b_2\\b_3\end{array}}
+\end{equation}
+这里矩阵里元素的乘法是$\GF\pth{2^8}$上的乘法。
+\end{theorem}
+
+同时还有一个推论：
+\begin{theorem}
+$\GF\pth{2^8}$上的多项式$a_3x^3+a_2x^2+a_1x+a_0$是模$x^4+1$可逆的，当且仅当矩阵
+\[\pth{\begin{array}{cccc}a_0&a_3&a_2&a_1\\a_1&a_0&a_3&a_2\\a_2&a_2&a_0&a_3\\a_3&a_2&a_1&a_0\end{array}}\]
+在$\GF\pth{2^8}$上是可逆的。
+\end{theorem}
+\subsubsection{AES加密过程}
+在AES加密的过程中，我们将长度为128个比特的明文分成了4行$N_b=4$列的状态阵列。每个阵列元素为一个长度为8比特的字节。因此，一共有$2^8=256$种字节。所以，我们可以将一个字节看作一个$\GF\pth{2^8}$中的元素。\par
+加密过程中的字节代换分为两步：
+\begin{enumerate}
+    \item 将字节看作$\GF\pth{2^8}$上的元素，将其映射到自己的乘法逆元。全0字节映射到自己。
+    \item 接着，对字节作以下$\GF\pth{2}$上的运算，输出$\pth{y_0, y_1, \ldots ,y_7}$:
+    \begin{equation}
+    \pth{\begin{array}{c}y_0\\y_1\\y_2\\y_3\\y_4\\y_5\\y_6\\y_7\end{array}}=\pth{
+\begin{array}{cccccccc}
+1     & 0     & 0     & 0     & 1     & 1     & 1     & 1 \\
+1     & 1     & 0     & 0     & 0     & 1     & 1     & 1 \\
+1     & 1     & 1     & 0     & 0     & 0     & 1     & 1 \\
+1     & 1     & 1     & 1     & 0     & 0     & 0     & 1 \\
+1     & 1     & 1     & 1     & 1     & 0     & 0     & 0 \\
+0     & 1     & 1     & 1     & 1     & 1     & 0     & 0 \\
+0     & 0     & 1     & 1     & 1     & 1     & 1     & 0 \\
+0     & 0     & 0     & 1     & 1     & 1     & 1     & 1 \\
+\end{array}%
+}\pth{\begin{array}{c}x_0\\x_1\\x_2\\x_3\\x_4\\x_5\\x_6\\x_7\end{array}}+\pth{\begin{array}{c}1\\1\\0\\0\\0\\1\\1\\0\end{array}}
+    \end{equation}
+\end{enumerate}
+在解密过程中，将上述的矩阵换为其逆矩阵即可。\par
+对于加密过程中的列混合：\par
+由于明文被分为4组，每组看作一行，那么对于每列来说，都含有四个元素，且每个元素都属于$\GF\pth{2^8}$. 因此，可以将每列看作$\GF\pth{2^8}$上的多项式。接着，记
+\begin{equation}
+c\pth{x}=\pth{03}_{16}x^3+\pth{01}_{16}x^2+\pth{01}_{16}x+\pth{02}_{16}
+\end{equation}
+其中$\pth{03}_{16}, \pth{01}_{16}, \pth{02}_{16}$都是用两个16进制数表示的8比特二进制串。\par
+然后，对于每列对应的$\GF\pth{2^8}$上的多项式，将其与$c\pth{x}$作$\GF\pth{2^8}$上多项式的模$x^4+1$乘法$\otimes$来输出。利用之前的讨论，我们可以得到
+\begin{equation}
+\pth{\begin{array}{c}b_0\\b_1\\b_2\\b_3\end{array}}=\pth{\begin{array}{cccc}02&03&01&01\\01&02&03&01\\01&01&02&03\\03&01&01&02\end{array}}\pth{\begin{array}{c}a_0\\a_1\\a_2\\a_3\end{array}}
+\end{equation}
+其中的运算作$\GF\pth{2^8}$上的运算。\par
+而通过数学上的计算可知，如果记
+\begin{equation}
+d\pth{x}=\pth{0B}_{16}x^3+\pth{0D}_{16}x^2+\pth{09}_{16}x+\pth{0E}_{16}
+\end{equation}
+
+则在解密运算中，将每列与$d(x)$作$\GF\pth{2^8}$上多项式的模$x^4+1$乘法$\otimes$来输出即可。类似地，也有一个对应的矩阵
+\begin{equation}
+\pth{\begin{array}{c}a_0\\a_1\\a_2\\a_3\end{array}}=\pth{\begin{array}{cccc}0e&0b&0d&09\\09&0e&0b&0d\\0d&09&0e&0b\\0b&0d&09&0e\end{array}}\pth{\begin{array}{c}b_0\\b_1\\b_2\\b_3\end{array}}
+\end{equation}
+
+对于密钥编排算法：\par
+密钥编排算法中用到了轮常数\verb`Rcon`. 对于\verb`Rcon`的第$i$个元素的形式为$\pth{\pth{rc_i}_{16}, 00, 00, 00}$, 其算法为
+\begin{equation}
+rc_i=2\cdot rc_{i-1}
+\end{equation}
+其中$\cdot$为$\GF\pth{2^8}$中的乘法，$rc_0=\pth{01}_{16}$.
