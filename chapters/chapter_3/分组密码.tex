@@ -58,16 +58,16 @@ c_i=\E{k}{m_i}
 \includegraphics[scale=1]{chapters/chapter_3/ECB.eps}
 \end{figure}
 
-ECB模式极不安全。比如说，我想用ECB模式的AES密码体系加密下图：
+ECB模式极不安全。比如说，我想用ECB模式的AES密码体系加密东南大学的校徽：
 \begin{figure}[H]
 \centering
-\includegraphics[scale=0.6]{chapters/chapter_3/ECB_origin.png}
+\includegraphics[width=10em]{chapters/chapter_3/ECB_origin.jpg}
 \end{figure}
 
 结果为
 \begin{figure}[H]
 \centering
-\includegraphics[scale=0.4]{chapters/chapter_3/ECB_result.jpeg}
+\includegraphics[width=10em]{chapters/chapter_3/ECB_result.jpg}
 \end{figure}
 \subsection{密码分组链接模式(CBC)}
 对于每组，其加密的输入为当前明文组与前一密文组的异或。也就是说，
@@ -106,7 +106,8 @@ OFB模式与CFB模式极其类似，区别仅在于每组向移位寄存器内�
 \includegraphics[scale=1]{chapters/chapter_3/OFB.eps}
 \end{figure}
 
-从图中可以看到，每组之间传递的数据与明文无关。因此，在OFB中，明文出错只会影响该组的密文，之后的密文都不会被影响。
+从图中可以看到，每组之间传递的数据与明文无关。因此，在OFB中，明文出错只会影响该组的密文，之后的密文都不会被影响。\par
+我们如果再仔细看一下OFB的模式图，会发现，事实上，OFB模式把分组密码变成了流密码。真正经过分组密码体系加密的是密钥，而明文则是通过与密钥加密出来的结果异或产生的密文。因此，如果要使OFB模式的安全性高，则要求由分组密码加密出来的密钥为伪随机序列。
 \subsection{计数器模式(CTR)}
 在借鉴了OFB中本组明文不参与下一组加密的经验之后，引入了CTR模式。在CTR模式中，存在一个计数器函数$f$. 其接受一个初始值，并在每组加密完成后，进行计数，累加到初始值之上。然后每组加密的时候，只需要将该函数的返回值输入分组加密算法中，输出值与当前明文组异或产生密文输出。\par
 其过程如图所示（图源wiki）：
