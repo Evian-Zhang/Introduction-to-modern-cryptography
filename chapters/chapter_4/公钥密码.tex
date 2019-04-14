@@ -9,6 +9,7 @@
 	\item 解密方利用私钥解密密文。
 \end{enumerate}
 
+因此，和之前讲到的对称密码体系类似，公钥密码体系包含的三个关键算法是：公钥-私钥生成算法，加密算法，解密算法。\par
 要在实践中实现这个思想，我们得满足：
 \begin{itemize}
 	\item 生成公钥、密钥对的算法较容易
@@ -22,6 +23,165 @@
 	\end{equation}
 \end{itemize}
 
+上述的六个要求，实质上就是需要我们找到如下的一种“单向陷门函数”$f(x)$:\par
+对于从$X$到$Y$的函数$f(x)$, 如果$\forall x\in X$, $f(x)$的计算较容易，而对于几乎所有$Y$中的元素$y$, 找出其对应的$x$都是计算不可行的。但是，如果掌握一个“陷门”$z$, 则求逆较容易。则称$f(x)$为一个单向陷门函数。\par
+比如说将一个怀表拆成许多零件是容易的，将零件重新装回一个怀表是几乎不可能的。但如果我们拥有怀表的构造说明书，那么用零件装回怀表又是较容易的。这就是现实中的一个单项陷门函数。\par
+如果我们找到了这样一种单向陷门函数，那么我们可以用它来构造公钥。\par
+但是，这个定义中，“较容易”、“几乎所有”、“计算不可行”都是一种直观上的感性词语。其真正的严格数学定义需要用到概率多项式时间等高深的方法，这里不再介绍。\par
 此外，公钥密码体系还有一个重要的特点是，其安全性基于数论知识，而非类似于分组密码的代换与替换。并且，在之后的算法细节中我们会了解到，公钥密码体系的算法比对称密码体系的算法要慢许多。同时，由于并非一次一密，因此其安全性从本质上说并不比对称密码体系高。\par
 公钥密码体系也称为非对称密码体系，因为用于加密的公钥不能解密其密文。\par
 同时，公钥密码除了解决了密钥分配问题，即对安全信道的需求问题，其还解决了另外一个问题：数字签名问题。即，在以往的对称加密体系中，我们无法得知收到的密文是否来自于我们选择的加密方。
+\section{RSA密码}
+在现在的互联网安全中，RSA密码体系承担了大部分的工作。如Outlook等加密邮件都是使用RSA的密码体系。
+\subsection{基本框架}
+之前讲到，公钥密码体系包括公钥-私钥生成算法，加密算法和解密算法。下面介绍其基本框架。值得指出的是，这里只是写了其操作步骤，而没有说明其具体实现方法。具体的实现方法会在后面再介绍。
+\subsubsection{公钥-私钥生成算法}
+\begin{enumerate}
+\item 取两个素数$p, q$, 且$p\neq q$
+\item 计算$n=pq$和$\phi(n)=\pth{p-1}\pth{q-1}$
+\item 取$e$, 使得$1<e<\phi(n)$且$\pth{\phi\pth{n}, e}=1$, 即$\phi(n)$与$e$互素
+\item 计算$d$, 使得$d$满足
+\begin{equation}
+de\equiv 1\pmod{\phi(n)}
+\end{equation}
+\item 公钥为$\pth{e, n}$, 私钥为$\pth{d, n}$.
+\end{enumerate}
+\subsubsection{加密算法}
+对于公钥$\pth{e, n}$, 加密者需要加密的二进制字符串对应的二进制数为$m$. 要求$m<n$. 加密操作为
+\begin{equation}
+c\equiv m^e\pmod{n}
+\end{equation}
+
+再将每个$c$拼起来形成密文串。
+\subsubsection{解密算法}
+对于私钥$\pth{d, n}$, 解密者将接收到的密文$c$作解密操作
+\begin{equation}
+m\equiv c^d\pmod{n}
+\end{equation}
+\subsection{算法细节}
+上一小节讨论了RSA的整体算法结构。接下来，分几个部分介绍一下具体的算法细节。
+\subsubsection{大整数}
+在RSA中，需要使用到许多大整数。这些大整数规模在1024比特左右。因此，我们在程序实现时，采用一个大整数类\verb`BigInteger`, 其将大整数以二进制串的形式存储，成员变量为符号位\verb`sign`(布尔值，非负为\verb`true`)，二进制串长度\verb`length`, 以及由低位向高位存储的二进制串\verb`value`.
+\subsubsection{大数模运算}
+最常用的运算是求两个大整数的乘积对于另一个大整数的模。为了使中间结果的位数不太大，我们可以考虑如下结论：\par
+若$\ext a=\sum_{i=0}^na_i2^i$, 那么
+\begin{equation}
+ab\bmod{c}=\sum_{i=0}^n\pth{a_ib2^i\bmod{c}}
+\end{equation}
+
+比如说，如果$\ext a=\pth{1001}_2=2^3+2^0$, 那么
+\[
+ab\bmod{c}=\pth{2^3b\bmod{c}}+\pth{2^0b\bmod{c}}
+\]
+
+利用这种想法，其C程序实现如下：
+\begin{prove}
+\begin{verbatim}
+BigInteger mulmod(const BigInteger mul1,
+                  const BigInteger mul2, const BigInteger mod)
+{
+    if (mul1 == 0 || mul2 == 0)
+        return 0;
+    
+    BigInteger product = 0;
+    BigInteger modMul1 = mul1;
+    for (int digit = 0; digit < mul2.length; digit++)
+    {
+        modMul1 = (modMul1 << 1) % mod;
+        if (mul2.value[digit])
+            product = (product + modMul1) % mod;
+    }
+    
+    return product;
+}
+\end{verbatim}
+\end{prove}
+
+此外，还有一个常用的运算是对于大整数$a, b, c$, 求$a^b\bmod{c}$. 这里常用的方法为快速指数法。其基本思想为：\par
+假设$b$的二进制表示为$b_kb_{k-1}\cdots b_0$, 即
+\begin{equation}
+b=b_k2^k+b_{k-1}2^{k-1}+\cdots +2b_1+b_0
+\end{equation}
+
+那么
+\begin{equation}
+a^b=\pth{\cdots \pth{\pth{a^{b_k}}^2a^{b_{k-1}}}^2\cdots a^{b_{1}}}^2a^{b_0}
+\end{equation}
+
+比如说，如果$b=9$, 那么我们可以
+\[a^b\bmod{c}=a^{8+1}\bmod{c}=\pth{\pth{a^2}^2}^2\cdot a\bmod{c}\]
+
+将原本需要算9次的乘法改进成算4次。此外，我们还可以每一次乘法都求模，这样可以使中间结果更小，如：\par
+$\ext b=\pth{1001}_2=2^3+2^0$, 那么
+\[
+a^b\bmod{c}=\pth{\pth{\pth{a^2\bmod{c}}^2\bmod{c}}^2\bmod{c}}\cdot a
+\]
+
+其C程序实现为：
+\begin{prove}
+\begin{verbatim}
+BigInteger fastExp(const BigInteger base,
+                   const BigInteger exponent,
+                   const BigInteger mod)
+{
+    BigInteger power = 1;
+    
+    for (int digit = exponent.length - 1; digit >= 0; digit--)
+    {
+        power = mulmod(power, power, mod);
+        if (exponent.value[digit])
+            power = mulmod(power, base, mod);
+    }
+    
+    return power;
+}
+\end{verbatim}
+\end{prove}
+\subsubsection{素数$p, q$的选取}
+在之后会介绍，RSA的安全性取决于$p, q$要是大素数。那么，我们就需要判断素数。最初等的方法是从$3$到$\sqrt{n}$挨个判断是否是$n$的因子。但是对于极大的数，这样判断方法是不现实的。因此，下面介绍一下常用的判断素数的方法：Miller-Rabin素数测试。\par
+Miller-Rabin素数测试基于一个基本定理：
+\begin{theorem}
+对于奇数$n=2^sd+1$, 其中$d$为奇数。若存在$a$满足$\forall 0\leq r\leq s-1$, 有
+\begin{gather}
+a^d\not\equiv 1\pmod{n}\\
+a^{2^rd}\not\equiv 1\pmod{n}
+\end{gather}
+
+则$p$不是素数。
+\end{theorem}
+
+由此定理，我们取充分多的$a$, 对于每个$a$我们测试所有的$0\leq r\leq s-1$, 只要有一个不满足，那么$p$就不是素数。如果我们取的$a$充分多，并且都没有找到不满足定理的值，那么$p$就可以被看作一个素数。\par
+那么，我们取多少个$a$比较合适呢？事实上，如果奇数$n$是$k$位二进制数，并对它进行$t$次Miller-Rabin测试均返回成功，那么其为合数的概率满足
+\begin{equation}
+P<\begin{dcases}k^24^{2-\sqrt{k}}&k\geq 2\\k^{\frac{3}{2}}2^tt^{-\frac{1}{2}}4^{2-\sqrt{tk}}&y=2, k\geq 88\text{或}3\leq t\leq \frac{k}{9}, k\geq 21\\\frac{7}{20}k2^{-5t}+\frac{1}{7}k^{-\frac{k}{2}-2t}+12k2^{-\frac{k}{4}-3t}&t\geq\frac{k}{9}, k\geq 21\\\frac{1}{7}k^{\frac{15}{4}}2^{-\frac{k}{2}-2t}&t\geq \frac{k}{4}, k\geq 21\end{dcases}
+\end{equation}
+
+对于$1024$比特的$n$, 选取$40$个$a$以后$n$为合数的概率要小于$2^{-83}$. 因此，常对$n$使用40次Miller-Rabin测试。
+其C程序实现如下：
+\begin{prove}
+\begin{verbatim}
+bool Miller_Rabin(long long n, int round)
+{
+    long long d = n - 1;
+    while (d % 2 == 0)
+        d /= 2;
+    
+    for (int i = 0; i < round; i++)
+    {
+        long long a = rand() % (n - 1) + 1;
+        long long tmp = d;
+        long long x = fastExp(a, d, n);
+        while (tmp != n - 1 && x != 1 && x != n - 1)
+        {
+            x = mulmod(x, x, n);
+            tmp *= 2;
+        }
+        if (tmp != n - 1 && tmp % 2 == 0)
+            return false;
+    }
+    return true;
+}
+\end{verbatim}
+\end{prove}
+\subsubsection{$e$的选取}
+常用的$e$取自$3,5,17,257,65537$. 对于两个
