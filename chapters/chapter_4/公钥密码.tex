@@ -62,7 +62,7 @@ m\equiv c^d\pmod{n}
 上一小节讨论了RSA的整体算法结构。接下来，分几个部分介绍一下具体的算法细节。
 \subsubsection{大整数}
 在RSA中，需要使用到许多大整数。这些大整数规模在1024比特左右。因此，我们在程序实现时，采用一个大整数类\verb`BigInteger`, 其将大整数以二进制串的形式存储，成员变量为符号位\verb`sign`(布尔值，非负为\verb`true`)，二进制串长度\verb`length`, 以及由低位向高位存储的二进制串\verb`value`.
-\subsubsection{大数模运算}
+\subsubsection{大整数相乘模运算}
 最常用的运算是求两个大整数的乘积对于另一个大整数的模。为了使中间结果的位数不太大，我们可以考虑如下结论：\par
 若$\ext a=\sum_{i=0}^na_i2^i$, 那么
 \begin{equation}
@@ -96,7 +96,7 @@ BigInteger mulmod(const BigInteger mul1,
 }
 \end{verbatim}
 \end{prove}
-
+\subsubsection{大整数幂模运算}
 此外，还有一个常用的运算是对于大整数$a, b, c$, 求$a^b\bmod{c}$. 这里常用的方法为快速指数法。其基本思想为：\par
 假设$b$的二进制表示为$b_kb_{k-1}\cdots b_0$, 即
 \begin{equation}
@@ -137,6 +137,79 @@ BigInteger fastExp(const BigInteger base,
 }
 \end{verbatim}
 \end{prove}
+\subsubsection{互素判定}
+判断两个数是否互素，我们常用欧几里德辗转相除法求两个数的最大公因数。其基本原理为
+\begin{theorem}
+对于整数$a, b$
+\begin{equation}
+\pth{a, b}=\pth{b, a\bmod{b}}
+\end{equation}
+\end{theorem}
+
+其C程序实现如下：
+\begin{prove}
+\begin{verbatim}
+BigInteger gcd(BigInteger a, BigInteger b)
+{
+    if (a % b == 0)
+        return b;
+    return gcd(b, a % b);
+}
+\end{verbatim}
+\end{prove}
+\subsubsection{求乘法逆元}
+由裴蜀定理可知，对于整数$x, y$, 存在整数$a, b$, 使得
+\begin{equation}
+ax+by=\pth{x, y}
+\end{equation}
+
+那么，如果$\pth{x,y} = 1$, 那么存在整数$a, b$, 使得
+\begin{equation}
+ax+by=1
+\end{equation}
+因此
+\[ax=-by+1\]
+
+故
+\begin{equation}
+ax\equiv 1\pmod{y}
+\end{equation}
+
+因此，我们如果可以由$x, y$找出对应的$a, b$, 那么$a$就是$x$模$y$的乘法逆元。\par
+因此，我们使用扩展欧几里德算法。其C程序实现如下：
+\begin{prove}
+\begin{verbatim}
+BigInteger extendGcd(BigInteger x, BigInteger y,
+                     BigInteger &a, BigInteger &b)
+{
+    if (y == 0)
+    {
+        a = 1;
+        b = 0;
+        return x;
+    }
+    
+    BigInteger r = extendGcd(y, x % y, a, b);
+    BigInteger tmp = a;
+    a = b;
+    b = tmp - x / y * b;
+    return r;
+}
+\end{verbatim}
+\end{prove}
+
+从而，求乘法逆元的C程序实现如下：
+\begin{prove}
+\begin{verbatim}
+BigInteger inverse(const BigInteger a, const BigInteger mod)
+{
+    BigInteger inverse = 0;
+    BigInteger tmp = 0;
+    extendGcd(a, mod, inverse, tmp);
+    return inverse;
+}
+\end{verbatim}
+\end{prove}
 \subsubsection{素数$p, q$的选取}
 在之后会介绍，RSA的安全性取决于$p, q$要是大素数。那么，我们就需要判断素数。最初等的方法是从$3$到$\sqrt{n}$挨个判断是否是$n$的因子。但是对于极大的数，这样判断方法是不现实的。因此，下面介绍一下常用的判断素数的方法：Miller-Rabin素数测试。\par
 Miller-Rabin素数测试基于一个基本定理：
@@ -156,32 +229,128 @@ a^{2^rd}\not\equiv 1\pmod{n}
 P<\begin{dcases}k^24^{2-\sqrt{k}}&k\geq 2\\k^{\frac{3}{2}}2^tt^{-\frac{1}{2}}4^{2-\sqrt{tk}}&y=2, k\geq 88\text{或}3\leq t\leq \frac{k}{9}, k\geq 21\\\frac{7}{20}k2^{-5t}+\frac{1}{7}k^{-\frac{k}{2}-2t}+12k2^{-\frac{k}{4}-3t}&t\geq\frac{k}{9}, k\geq 21\\\frac{1}{7}k^{\frac{15}{4}}2^{-\frac{k}{2}-2t}&t\geq \frac{k}{4}, k\geq 21\end{dcases}
 \end{equation}
 
-对于$1024$比特的$n$, 选取$40$个$a$以后$n$为合数的概率要小于$2^{-83}$. 因此，常对$n$使用40次Miller-Rabin测试。
+对于$1024$比特的$n$, 选取$40$个$a$以后$n$为合数的概率要小于$2^{-83}$. 而事实上，我们也常对$n$使用40次Miller-Rabin测试。
 其C程序实现如下：
 \begin{prove}
 \begin{verbatim}
-bool Miller_Rabin(long long n, int round)
+bool Miller_Rabin(BigInteger n, int round)
 {
-    long long d = n - 1;
-    while (d % 2 == 0)
-        d /= 2;
+    BigInteger m = n - 1;
+    int k = 0;
+    while (!m.getValue()[0])
+    {
+        k++;
+        m = m >> 1;
+    }
     
     for (int i = 0; i < round; i++)
     {
-        long long a = rand() % (n - 1) + 1;
-        long long tmp = d;
-        long long x = fastExp(a, d, n);
-        while (tmp != n - 1 && x != 1 && x != n - 1)
+        BigInteger a = BigInteger::getRand() % (n - 1) + 1;
+        BigInteger b = BigInteger::fastExp(a, m, n);
+        if (b == 1)
+            return true;
+        
+        for (int j = 0; j < k; j++)
         {
-            x = mulmod(x, x, n);
-            tmp *= 2;
+            if (b == n - 1)
+                return true;
+            b = BigInteger::mulmod(b, b, n);
         }
-        if (tmp != n - 1 && tmp % 2 == 0)
-            return false;
     }
-    return true;
+    return false;
+}
+\end{verbatim}
+\end{prove}
+
+上述讲的是如何测试$p, q$是否为素数。那么如何生成$p, q$呢？常用的方法是：\par
+随机生成一个1024比特的奇数，然后对其进行40轮Miller-Rabin测试。如果不是素数，则将其自增2.\par
+看似这个方法很没有效率，但是，根据素数定理，在$0$到$N$之间，每两个相邻的素数之间的平均距离为$\ln N$. 因此，对于1024比特的奇数$n$, 如果其不为素数，那么其前后两个素数之间的距离约为$\ln n$. 故其平均需要再往后测试
+\[\frac{\ln n}{2}\approx 354\]
+
+次即可。\par
+综上，公钥-私钥对的产生的C程序算法如下：
+\begin{prove}
+\begin{verbatim}
+void generateKeys(BigInteger &pub, BigInteger &pri)
+{
+    pub = getRandBit(1024);
+    if (!pub.getValue()[0])
+        pub += 1;
+    
+    while (!Miller_Rabin(pub, 40))
+        pub += 2;
+    
+    
+    pri = getRandBit(1024);
+    if (!pri.getValue()[0])
+        pri += 1;
+    
+    while (!Miller_Rabin(pri, 40))
+        pri += 2;
 }
 \end{verbatim}
 \end{prove}
 \subsubsection{$e$的选取}
-常用的$e$取自$3,5,17,257,65537$. 对于两个
+由于RSA算法的安全性主要在于$p, q$的选取，因此，作为公钥的$e$的选取就没有必要是随机的。常用的$e$取自$3,5,17,257,65537$. 判断$e$与$\phi(n)=\pth{p-1}\pth{q-1}$是否互素可以用欧几里德辗转相除法\verb`gcd()`来求其最大公因数，判断其是否为$1$.\par
+其C程序实现如下：
+\begin{prove}
+\begin{verbatim}
+BigInteger generateE(BigInteger phi)
+{
+    BigInteger list[5] = {65537, 257, 17, 5, 3};
+    for (int i = 0; i < 5; i++)
+        if (BigInteger::gcd(phi, list[i]) == 1)
+            return list[i];
+    
+    return -1;
+}
+\end{verbatim}
+\end{prove}
+\subsubsection{$d$的求值}
+由定义，$d$是$e$模$\phi(n)$的乘法逆元。因此，我们采用扩展欧几里德算法求$d$.
+\subsubsection{加密}
+RSA的加密过程实际上就是求大整数的幂的模。因此，我们可以采用快速指数法。
+\subsubsection{解密}
+RSA的解密过程是解密方进行的操作。而解密方拥有的数有$p, q, n, \phi(n), e, d$以及密文$c$.\par
+解密方可计算
+\begin{equation}
+\begin{dcases}d_p=d\bmod{\pth{p-1}}\\d_q=d\bmod{q-1}\end{dcases}, \begin{dcases}m_p=c^{d_p}\bmod{p}\\m_q=c^{d_q}\bmod{q}\end{dcases}
+\end{equation}
+
+于是由费马小定理可化简得到
+\[\begin{dcases}m_p\equiv m\pmod{p}\\m_q\equiv m\pmod{q}\end{dcases}\]
+
+运用中国剩余定理:
+\begin{equation}
+m\equiv qe_pm_p+pe_qm_q\pmod{pq}
+\end{equation}
+
+其中$qe_p\equiv 1\pmod{p}, pe_q\equiv 1\pmod{q}$.\par
+如果我们采用快速指数法计算$m_p, m_q$, 采用扩展欧几里德算法计算$e_p, e_q$, 即可得到$m$.\par
+其C程序实现如下：
+\begin{prove}
+\begin{verbatim}
+BigInteger RSA_DEC(BigInteger cipher, BigInteger d,
+                   BigInteger p, BigInteger q)
+{
+    BigInteger dp = d % (p - 1);
+    BigInteger dq = d % (q - 1);
+    
+    BigInteger mp = fastExp(cipher, dp, p);
+    BigInteger mq = fastExp(cipher, dq, q);
+    
+    BigInteger ep = inverse(q, p);
+    BigInteger eq = inverse(p, q);
+    
+    BigInteger n = p * q;
+    
+    BigInteger tmp1 = mulmod(q, ep, n);
+    tmp1 = mulmod(tmp1, mp, n);
+    
+    BigInteger tmp2 = mulmod(p, eq, n);
+    tmp2 = mulmod(tmp2, mq, n);
+    
+    return tmp1 + tmp2;
+}
+\end{verbatim}
+\end{prove}
