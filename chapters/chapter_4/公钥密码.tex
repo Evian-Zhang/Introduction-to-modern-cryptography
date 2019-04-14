@@ -38,25 +38,25 @@
 \subsubsection{公钥-私钥生成算法}
 \begin{enumerate}
 \item 取两个素数$p, q$, 且$p\neq q$
-\item 计算$n=pq$和$\phi(n)=\pth{p-1}\pth{q-1}$
-\item 取$e$, 使得$1<e<\phi(n)$且$\pth{\phi\pth{n}, e}=1$, 即$\phi(n)$与$e$互素
+\item 计算$n=pq$和$\varphi(n)=\pth{p-1}\pth{q-1}$
+\item 取$e$, 使得$1<e<\varphi(n)$且$\pth{\varphi\pth{n}, e}=1$, 即$\varphi(n)$与$e$互素
 \item 计算$d$, 使得$d$满足
 \begin{equation}
-de\equiv 1\pmod{\phi(n)}
+de\equiv 1\pmod{\varphi(n)}
 \end{equation}
 \item 公钥为$\pth{e, n}$, 私钥为$\pth{d, n}$.
 \end{enumerate}
 \subsubsection{加密算法}
 对于公钥$\pth{e, n}$, 加密者需要加密的二进制字符串对应的二进制数为$m$. 要求$m<n$. 加密操作为
 \begin{equation}
-c\equiv m^e\pmod{n}
+c= m^e\bmod{n}
 \end{equation}
 
 再将每个$c$拼起来形成密文串。
 \subsubsection{解密算法}
 对于私钥$\pth{d, n}$, 解密者将接收到的密文$c$作解密操作
 \begin{equation}
-m\equiv c^d\pmod{n}
+m= c^d\bmod{n}
 \end{equation}
 \subsection{算法细节}
 上一小节讨论了RSA的整体算法结构。接下来，分几个部分介绍一下具体的算法细节。
@@ -291,7 +291,7 @@ void generateKeys(BigInteger &pub, BigInteger &pri)
 \end{verbatim}
 \end{prove}
 \subsubsection{$e$的选取}
-由于RSA算法的安全性主要在于$p, q$的选取，因此，作为公钥的$e$的选取就没有必要是随机的。常用的$e$取自$3,5,17,257,65537$. 判断$e$与$\phi(n)=\pth{p-1}\pth{q-1}$是否互素可以用欧几里德辗转相除法\verb`gcd()`来求其最大公因数，判断其是否为$1$.\par
+由于RSA算法的安全性主要在于$p, q$的选取，因此，作为公钥的$e$的选取就没有必要是随机的。常用的$e$取自$3,5,17,257,65537$. 判断$e$与$\varphi(n)=\pth{p-1}\pth{q-1}$是否互素可以用欧几里德辗转相除法\verb`gcd()`来求其最大公因数，判断其是否为$1$.\par
 其C程序实现如下：
 \begin{prove}
 \begin{verbatim}
@@ -307,11 +307,11 @@ BigInteger generateE(BigInteger phi)
 \end{verbatim}
 \end{prove}
 \subsubsection{$d$的求值}
-由定义，$d$是$e$模$\phi(n)$的乘法逆元。因此，我们采用扩展欧几里德算法求$d$.
+由定义，$d$是$e$模$\varphi(n)$的乘法逆元。因此，我们采用扩展欧几里德算法求$d$.
 \subsubsection{加密}
 RSA的加密过程实际上就是求大整数的幂的模。因此，我们可以采用快速指数法。
 \subsubsection{解密}
-RSA的解密过程是解密方进行的操作。而解密方拥有的数有$p, q, n, \phi(n), e, d$以及密文$c$.\par
+RSA的解密过程是解密方进行的操作。而解密方拥有的数有$p, q, n, \varphi(n), e, d$以及密文$c$.\par
 解密方可计算
 \begin{equation}
 \begin{dcases}d_p=d\bmod{\pth{p-1}}\\d_q=d\bmod{q-1}\end{dcases}, \begin{dcases}m_p=c^{d_p}\bmod{p}\\m_q=c^{d_q}\bmod{q}\end{dcases}
@@ -354,3 +354,160 @@ BigInteger RSA_DEC(BigInteger cipher, BigInteger d,
 }
 \end{verbatim}
 \end{prove}
+\subsection{RSA的数学验证}
+接下来，用数论知识验证RSA算法的正确性，即对于任意符合条件的明文，有
+\begin{equation}
+\D{\pth{d, n}}{\E{\pth{e, n}}{m}}=m
+\end{equation}
+
+\begin{prove}
+由
+\[c=m^e\bmod{n}\]
+以及
+\[ed\equiv 1\pmod{\varphi(n)}\]
+可知
+\begin{equation}
+c^d\equiv m^{ed}\equiv m^{k\varphi(n)+1}\pmod{n}
+\end{equation}
+
+下面分两种情况讨论：
+\begin{enumerate}
+	\item 若$\pth{m, n} = 1$.\par
+	则由欧拉定理可知
+	\[m^{k\varphi(n)+1}\equiv \pth{m^\varphi(n)}^km\equiv 1^km\equiv m\pmod{n}\]
+	故
+	\[c^d\equiv m\pmod{n}\]
+	\item 若$\pth{m, n}=g>1$\par
+	则$g\mid n=pq$, 故$g=p$或$g=q$. 又$g\mid m$, 故$m$是$p$或$q$的倍数。不妨设$m=tp$, 则$\pth{m, q}=1$. 故
+	\begin{align*}
+	&m^{k\varphi(n)}\equiv\pth{m^{k\varphi(q)}}^{\varphi(p)}\\
+	\equiv&1^{\varphi(p)}\equiv 1\pmod{q}
+	\end{align*}
+
+	故
+	\[m^{k\varphi(n)}=1+rq\]
+	从而
+	\[m^{k\varphi(n)+1}=m+mrq=m+rtpq=m+rtn\]
+	故
+	\[c^d\equiv m\pmod{n}\]
+\end{enumerate}
+\end{prove}
+\subsection{RSA的安全性}
+根据以上的讨论，本小节论述RSA的安全性。\par
+首先，如果攻击者知道了素数$p, q$, 那么由公钥就很容易得到私钥（用扩展欧几里德算法），从而破解RSA.\par
+事实上，如果要破解RSA，即获得私钥$d$, 那么就需要由$n$求得$\varphi(n)$, 然后用扩展欧几里德算法求私钥。如果攻击者通过某种方法，由$n$求得了$\phi(n)$, 那么由数论知识可以得到
+\[\begin{dcases}p+q=n-\varphi(n)+1\\p-q=\sqrt{\pth{n-\varphi(n)+1}^2-4n}\end{dcases}\]
+故如果求得$n$和$\varphi(n)$, 那么等价于求得$p$和$q$.\par
+因此，破解RSA就等价于因数分解大整数。
+\section{ElGamal密码}
+\subsection{数学基础}
+使用ElGamal密码，首先需要有一定的抽象代数基础。下面简单介绍几个术语：\par
+对于群$G$及$G$上的运算$\cdot$, 将$n$个$g$相运算$g\cdot g\cdot \cdots \cdot g$的结果记作$g^n$.\par
+如果存在一个元素$g\in G$, 使得对于任意元素$x\in G$, 存在$n$使得$a=g^n$, 则称$G$为循环群，$g$为$G$的生成元。\par
+如果$G$的元素有$q$个，则称$G$是$q$阶的。
+\subsection{基本框架}
+和RSA类似，ElGamal密码的三个基本步骤为公钥-私钥生成、加密、解密。
+\subsubsection{公钥-私钥生成}
+\begin{enumerate}
+	\item 选择一个生成元为$g$的$q$阶循环群$G$
+	\item 选择一个$0$到$q-1$的整数$x$
+	\item 计算$h=g^x$
+	\item 将$\pth{G, q, g, h}$作为公钥，$x$作为私钥
+\end{enumerate}
+\subsubsection{加密}
+对于明文$m$和公钥$\pth{G, q, g, h}$, 加密者需要做的是
+\begin{enumerate}
+	\item 选择一个$0$到$q-1$的整数$y$
+	\item 计算$c_1=g^y, s=h^y$
+	\item 将$m$映射到$G$上的一个元素$m'$
+	\item 计算$c_2=m'\cdot s=m\cdot h^y$
+	\item 密文为$\pth{c_1, c_2}$
+\end{enumerate}
+
+在加密过程中，第3步将$m$映射到$G$上的一个元素$m'$是一个可以定制的过程，对于不同描述方法的群$G$, 有不同的映射方法，因而导致了ElGamal可以使用多种密码体制。
+\subsubsection{解密}
+对于密文$\pth{c_1, c_2}$和私钥$x$, 解密者需要做的是
+\begin{enumerate}
+	\item 计算$s=c_1^x$
+	\item 计算$m'=c_2\cdot s^{-1}$
+	\item 将$m'$映射回$m$即为明文
+\end{enumerate}
+\subsection{正确性证明}
+需要证明ElGamal密码的正确性，只需要证明解密者第一步计算$s=c_1^x$得到的$s$即为加密者的$s$. 而
+\[c_1^x=\pth{g^y}^x=\pth{g^x}^y=h^y=s\]
+
+从而证明了ElGamal密码的正确性。
+\subsection{ElGamal密码的安全性}
+通过对ElGamal密码的算法介绍，我们可以发现，其安全性，也就是由公钥无法推出私钥，是建立在已知$h=g^x$中的$h$和$g$, 却无法得到$x$的问题。这个问题被称作离散对数问题。
+\subsection{循环群$G$的选取与椭圆曲线}
+\subsubsection{椭圆曲线}
+在常用的ElGamal密码中，$G$常被描述成有限域上的椭圆曲线上的点构成的群。其定义为：
+\begin{equation}
+E_p\pth{a, b}=\brace{\pth{x, y}\mid y^2\equiv x^3+ax+b\pmod{p}, 0\leq x\leq p-1, 0\leq y\leq p-1},\quad a,b\in\GF\pth{p}, 4a^3+27b^2\neq 0
+\end{equation}
+
+其上加法单位元$0$为无限远点。\par
+其上的加法$+$的定义为：\par
+对于$E_p\pth{a, b}$的元素$A(x_1, y_1)$和$B(x_2, y_2)$, 若两者相异，$A+B$表示穿过$A$和$B$的弦和椭圆曲线相交的第三点，再经$x$轴反射的镜像点；若两者是同一点，$A+A$表示以$A$为切点和椭圆曲线相交的点再经$x$轴反射的镜像点。若$A$和$B$的弦与$y$轴平行，$A+B=0$（无限远点）。\par
+同时，也可以用代数方式定义加法：\par
+对于$E_p\pth{a, b}$的元素$A(x_1, y_1)$和$B(x_2, y_2)$
+\begin{itemize}
+	\item $x_1\neq x_2$\par
+	记$\ext s=\frac{y_1-y_2}{x_1-x_2}$, 则
+	\begin{equation}
+	\begin{dcases}x_{A+B}=s^2-x_1-x_2\\y_{A+B}=-y_1+s\pth{x_1-x_2}\end{dcases}
+	\end{equation}
+	\item $x_1=x_2$
+	\begin{itemize}
+		\item $y_1=-y_2$
+		\[A+B=0\]
+		\item $y_1=y_2$\par
+		记$\ext s=\frac{3x_1^2+a}{2y_1}$, 则
+		\begin{equation}
+		\begin{dcases}x_{A+B}=s^2-2x_1\\y_{A+B}=-y_1+s\pth{x_1-x_2}\end{dcases}
+		\end{equation}
+	\end{itemize}
+\end{itemize}
+
+$E_p\pth{a, b}$上的数乘运算即为：$n$个点$A$相加$A+A+\cdots +A=nA$.\par
+而Hasse定理则阐述了一件事：
+\begin{theorem}
+设$N$为$E_p\pth{a,b}$元素的个数，那么
+\begin{equation}
+\abs{N-\pth{q-1}}\leq 2\sqrt{q}
+\end{equation}
+\end{theorem}
+
+从而我们得知，$E_p\pth{a, b}$是一个有限群。\par
+又由另一个定理：素数阶的有限群是循环群，因此，如果$N$为素数，那么$E_p\pth{a, b}$为循环群。NIST组织提供了一组供密码学使用的椭圆曲线，保证其一定能够构成一个循环群。
+\subsubsection{明文映射到椭圆曲线群}
+对于二进制串的明文，设其对应的二进制数为$m$，选取一个充分大的整数$k$(该整数也属于公钥中的一部分)。令
+\[x=mk+j\]
+其中$j$从0开始，不断自增1，直到在$E_p\pth{a, b}$中存在一点$\pth{x_0, y_0}$, 使得$x_0=x$, 那么就将该点看作明文映射的对应元素。
+\subsubsection{椭圆曲线群映射到明文}
+对于点$\pth{x, y}$和公钥中的整数$k$, 计算
+\[m=\lfloor \frac{x}{k} \rfloor\]
+即可。
+\subsection{椭圆曲线上的ElGamal}
+在介绍了循环群$E_p\pth{a, b}$之后，我们可以将其应用到ElGamal密码上。对其基本框架作如下修改：
+\subsubsection{公钥-私钥生成}
+\begin{enumerate}
+	\item 选取一个构成循环群的生成元为$P$的$N$阶椭圆曲线群$E_p\pth{a, b}$
+	\item 选取一个足够大的整数$k$, 构成明文、椭圆曲线群之间的映射
+	\item 从$1$到$N-1$之间选择一个整数$x$
+	\item 计算$Y=xP$
+	\item 公钥为$\pth{E_p\pth{a, b}, P, N, Y, k}$, 私钥为$x$
+\end{enumerate}
+\subsubsection{加密}
+\begin{enumerate}
+	\item 从$1$到$N-1$之间选择一个整数$y$
+	\item 计算$C=yP, C'=yY$
+	\item 将明文$m$映射到$E_p\pth{a, b}$上的点$P_m$
+	\item 密文为$\pth{C, C'+P_m}$
+\end{enumerate}
+\subsubsection{解密}
+\begin{enumerate}
+	\item 计算$C'=xC$
+	\item 计算$P_m=C'+P_m+\pth{-C'}$
+	\item 将$P_m$映射回$m$即为明文
+\end{enumerate}
