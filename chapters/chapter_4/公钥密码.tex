@@ -443,30 +443,27 @@ c^d\equiv m^{ed}\equiv m^{k\varphi(n)+1}\pmod{n}
 \subsubsection{椭圆曲线}
 在常用的ElGamal密码中，$G$常被描述成有限域上的椭圆曲线上的点构成的群。其定义为：
 \begin{equation}
-E_p\pth{a, b}=\brace{\pth{x, y}\mid y^2\equiv x^3+ax+b\pmod{p}, 0\leq x\leq p-1, 0\leq y\leq p-1},\quad a,b\in\GF\pth{p}, 4a^3+27b^2\neq 0
+E_p\pth{a, b}=\brace{\pth{x, y}\mid y^2\equiv x^3+ax+b\pmod{p}, 0\leq x\leq p-1, 0\leq y\leq p-1}\cup \brace{O},\quad a,b\in\GF\pth{p}, 4a^3+27b^2\neq 0
 \end{equation}
 
-其上加法单位元$0$为无限远点。\par
+其中$O$为加法单位元，意义是无限远点。\par
 其上的加法$+$的定义为：\par
-对于$E_p\pth{a, b}$的元素$A(x_1, y_1)$和$B(x_2, y_2)$, 若两者相异，$A+B$表示穿过$A$和$B$的弦和椭圆曲线相交的第三点，再经$x$轴反射的镜像点；若两者是同一点，$A+A$表示以$A$为切点和椭圆曲线相交的点再经$x$轴反射的镜像点。若$A$和$B$的弦与$y$轴平行，$A+B=0$（无限远点）。\par
+对于$E_p\pth{a, b}$的元素$A(x_1, y_1)$和$B(x_2, y_2)$, 若两者相异，$A+B$表示穿过$A$和$B$的弦和椭圆曲线相交的第三点，再经$x$轴反射的镜像点；若两者是同一点，$A+A$表示以$A$为切点和椭圆曲线相交的点再经$x$轴反射的镜像点。若$A$和$B$的弦与$y$轴平行，$A+B=O$（无限远点）。\par
 同时，也可以用代数方式定义加法：\par
 对于$E_p\pth{a, b}$的元素$A(x_1, y_1)$和$B(x_2, y_2)$
 \begin{itemize}
-	\item $x_1\neq x_2$\par
-	记$\ext s=\frac{y_1-y_2}{x_1-x_2}$, 则
+	\item $x_1\equiv x_2\pmod{p}, y_1\equiv -y_2\pmod{p}$
+	\[A+B=O\]
+	\item $\pth{x_1, y_1}\not\equiv\pth{x_2, -y_2}\mod{c}$
+	\begin{gather}
+	x_{A+B}=\lambda^2-x_1-x_2\bmod{p}\\
+	y_{A+B}=\lambda\pth{x_1-x_3}-y_1\bmod{p}
+	\end{gather}
+
+	其中
 	\begin{equation}
-	\begin{dcases}x_{A+B}=s^2-x_1-x_2\\y_{A+B}=-y_1+s\pth{x_1-x_2}\end{dcases}
+	\lambda=\begin{dcases}\pth{y_2-y_1}\cdot\pth{x_2-x_1}^{-1}&\pth{x_1, y_1}\not\equiv \pth{x_2, y_2}\pmod{p}\\\pth{3x_1^2+a}\cdot\pth{2y_1}^{-1}&\pth{x_1, y_1}\equiv\pth{x_2, y_2}\pmod{p}\end{dcases}
 	\end{equation}
-	\item $x_1=x_2$
-	\begin{itemize}
-		\item $y_1=-y_2$
-		\[A+B=0\]
-		\item $y_1=y_2$\par
-		记$\ext s=\frac{3x_1^2+a}{2y_1}$, 则
-		\begin{equation}
-		\begin{dcases}x_{A+B}=s^2-2x_1\\y_{A+B}=-y_1+s\pth{x_1-x_2}\end{dcases}
-		\end{equation}
-	\end{itemize}
 \end{itemize}
 
 $E_p\pth{a, b}$上的数乘运算即为：$n$个点$A$相加$A+A+\cdots +A=nA$.\par
