@@ -1,7 +1,9 @@
 % !TEX root = ../../现代密码学简介.tex
 \chapter{公钥密码}
 \section{简介}
-之前我们讲到，最安全的密码体系是一次一密。但是，由于其需要用安全信道传输的密钥长度至少于明文一样长，并且一个密钥只能用一次，因此，与其将密钥传输，不如将明文传输。所以，一次一密的缺陷也十分明显。为了解决这一问题，之前我们采取的方法是使用各种手法，包括流密码以及分组密码等，来缩短密钥的长度。而公钥密码则提供了另一种不同的思路：减弱对安全信道的需求。其基本思想为：
+之前我们讲到，最安全的密码体系是一次一密。但是，由于其需要用安全信道传输的密钥长度至少于明文一样长，并且一个密钥只能用一次，因此，与其将密钥传输，不如将明文传输。所以，一次一密的缺陷也十分明显。为了解决这一问题，之前我们采取的方法是使用各种手法，包括流密码以及分组密码等，来缩短密钥的长度。\par
+此外，在之前谈到的对称密码体系中，如果一个系统中有$n$个人要进行加密通信。那么，为了保障安全性，每一次通信的过程中都要使用独一无二的密钥。因此，一共需要$\ext C_n^2=\frac{n\pth{n-1}}{2}$个密钥。\par
+公钥密码体系则可以解决这两个问题，其基本思想为:
 \begin{enumerate}
 	\item 由解密方生成一对密钥，称为公钥（记作$SK$）和私钥（记作$PK$）。
 	\item 解密方将公钥传送给加密方（不需要通过安全信道）。
@@ -409,44 +411,78 @@ c^d\equiv m^{ed}\equiv m^{k\varphi(n)+1}\pmod{n}
 和RSA类似，ElGamal密码的三个基本步骤为公钥-私钥生成、加密、解密。
 \subsubsection{公钥-私钥生成}
 \begin{enumerate}
-	\item 选择一个生成元为$g$的$q$阶循环群$G$
-	\item 选择一个$0$到$q-1$的整数$x$
-	\item 计算$h=g^x$
-	\item 将$\pth{G, q, g, h}$作为公钥，$x$作为私钥
+	\item 选择一个生成元为$g$的$p$阶循环群$G$
+	\item 选择一个$0$到$p-1$的整数$x$
+	\item 计算$y=g^x$
+	\item 将$\pth{G, p, g, y}$作为公钥，$x$作为私钥
 \end{enumerate}
 \subsubsection{加密}
-对于明文$m$和公钥$\pth{G, q, g, h}$, 加密者需要做的是
+对于明文$m$和公钥$\pth{G, p, g, y}$, 加密者需要做的是
 \begin{enumerate}
-	\item 选择一个$0$到$q-1$的整数$y$
-	\item 计算$c_1=g^y, s=h^y$
+	\item 选择一个$0$到$p-1$的整数$k$
+	\item 计算$C_1=g^k, s=y^k$
 	\item 将$m$映射到$G$上的一个元素$m'$
-	\item 计算$c_2=m'\cdot s=m\cdot h^y$
-	\item 密文为$\pth{c_1, c_2}$
+	\item 计算$C_2=m'\cdot s=m'\cdot y^k$
+	\item 密文为$\pth{C_1, C_2}$
 \end{enumerate}
 
-在加密过程中，第3步将$m$映射到$G$上的一个元素$m'$是一个可以定制的过程，对于不同描述方法的群$G$, 有不同的映射方法，因而导致了ElGamal可以使用多种密码体制。
+在加密过程中，第3步将$m$映射到$G$上的一个元素$m'$是一个可以定制的过程，对于不同描述方法的群$G$, 有不同的映射方法，因而导致了ElGamal可以使用多种密码体制。\par
+此外，在加密过程中我们也可以发现，ElGamal体系有一个缺点：密文长度是明文的两倍。\par
+
 \subsubsection{解密}
-对于密文$\pth{c_1, c_2}$和私钥$x$, 解密者需要做的是
+对于密文$\pth{C_1, C_2}$和私钥$x$, 解密者需要做的是
 \begin{enumerate}
-	\item 计算$s=c_1^x$
-	\item 计算$m'=c_2\cdot s^{-1}$
+	\item 计算$s=C_1^x$
+	\item 计算$m'=C_2\cdot s^{-1}$
 	\item 将$m'$映射回$m$即为明文
 \end{enumerate}
 \subsection{正确性证明}
-需要证明ElGamal密码的正确性，只需要证明解密者第一步计算$s=c_1^x$得到的$s$即为加密者的$s$. 而
-\[c_1^x=\pth{g^y}^x=\pth{g^x}^y=h^y=s\]
+需要证明ElGamal密码的正确性，只需要证明解密者第一步计算$s=C_1^x$得到的$s$即为加密者的$s$. 而
+\[C_1^x=\pth{g^k}^x=\pth{g^x}^k=y^k=s\]
 
 从而证明了ElGamal密码的正确性。
 \subsection{ElGamal密码的安全性}
-通过对ElGamal密码的算法介绍，我们可以发现，其安全性，也就是由公钥无法推出私钥，是建立在已知$h=g^x$中的$h$和$g$, 却无法得到$x$的问题。这个问题被称作离散对数问题。
-\subsection{循环群$G$的选取与椭圆曲线}
-\subsubsection{椭圆曲线}
+通过对ElGamal密码的算法介绍，我们可以发现，其安全性，也就是由公钥无法推出私钥，是建立在已知$y=g^x$中的$y$和$g$, 却无法得到$x$的问题。这个问题被称作离散对数问题。
+\subsection{模$p$整数群上的ElGamal}
+ElGamal密码体系由于循环群$G$的选取不同而可以产生许多不同的加密方法。而我们知道，最简单的循环群就是模$p$整数群$\Z_p$。即由$1$到$p-1$的整数构成的集合$\Z_p=\brace{1, 2,\ldots, p-1}$. 其上的乘法定义为
+\[a\cdot b=ab\bmod{p}\]
+
+那么根据数论知识我们可以得到，
+\[\exists g\in \Z_p, \forall x\in\Z_p, \exists k\in \Z, g=x^k\]
+意思是说对于任意模$p$整数群$\Z_p$，存在生成元$g$, 使得$\Z_p$中的每个元素都是$g$的幂。比如说，对于$\Z_5=\brace{1, 2, 3, 4}$, $3$是其一个生成元，由于
+\[3^0=1, 3^1=3, 3^2=4, 3^3=2, 3^4=1,\ldots\]
+因此每一个$\Z_5$中的元素都可以表示成$3$的幂。\par
+那么，在$\Z_p$上的ElGamal密码体系即为：
+\subsubsection{公钥-私钥生成}
+\begin{enumerate}
+	\item 选取素数$p$, 构成$p-1$阶循环群$\Z_p$, 选取其生成元$g$
+	\item 在$1$到$p-1$中选一个数$x$
+	\item 计算$y=g^x$
+	\item 公钥为$\pth{p, g, y}$, 私钥为$x$
+\end{enumerate}
+\subsubsection{加密}
+假设明文对应的二进制数为$m$
+\begin{enumerate}
+	\item 在$1$到$p-1$中选一个数$k$
+	\item 计算$C_1=g^k, s=y^k$
+	\item 计算$C_2=m\cdot s=m\cdot y^k$
+	\item 密文为$\pth{C_1, C_2}$
+\end{enumerate}
+\subsubsection{解密}
+假设密文为$\pth{C_1, C_2}$
+\begin{enumerate}
+	\item 计算$s=C_1^x$
+	\item 计算$m=C_2\cdot s^{-1}$, 即为明文
+\end{enumerate}
+\subsection{椭圆曲线}
 在常用的ElGamal密码中，$G$常被描述成有限域上的椭圆曲线上的点构成的群。其定义为：
 \begin{equation}
-E_p\pth{a, b}=\brace{\pth{x, y}\mid y^2\equiv x^3+ax+b\pmod{p}, 0\leq x\leq p-1, 0\leq y\leq p-1}\cup \brace{O},\quad a,b\in\GF\pth{p}, 4a^3+27b^2\neq 0
+E_p\pth{a, b}=\brace{\pth{x, y}\mid y^2\equiv x^3+ax+b\pmod{p}, 0\leq x\leq p-1, 0\leq y\leq p-1}\cup \brace{O}
 \end{equation}
 
-其中$O$为加法单位元，意义是无限远点。\par
+其中
+\[a,b\in\GF\pth{p}, 4a^3+27b^2\neq 0\]
+而$O$为加法单位元，意义是无限远点。\par
 其上的加法$+$的定义为：\par
 对于$E_p\pth{a, b}$的元素$A(x_1, y_1)$和$B(x_2, y_2)$, 若两者相异，$A+B$表示穿过$A$和$B$的弦和椭圆曲线相交的第三点，再经$x$轴反射的镜像点；若两者是同一点，$A+A$表示以$A$为切点和椭圆曲线相交的点再经$x$轴反射的镜像点。若$A$和$B$的弦与$y$轴平行，$A+B=O$（无限远点）。\par
 同时，也可以用代数方式定义加法：\par
