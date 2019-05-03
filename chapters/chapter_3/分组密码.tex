@@ -33,7 +33,7 @@
 可以用下图形象地理解费斯妥密码（图源wiki）：
 \begin{figure}[H]
     \centering
-    \includegraphics[scale=0.8]{chapters/chapter_4/Feistel.eps}
+    \includegraphics[scale=0.8]{chapters/chapter_3/Feistel.eps}
 \end{figure}
 
 值得注意到的一点是，在最后一次输出的时候，不再进行交换，也就是说，输出的并不是$\pth{L_{n+1}, R_{n+1}}$, 而是$\pth{R_{n+1}, L_{n+1}}$.
@@ -42,7 +42,7 @@ SP网络每轮接受到输入之后，首先，将输入与该轮的子密钥进
 可以通过下图形象地理解SP网络（图源wiki）：
 \begin{figure}[H]
     \centering
-    \includegraphics[scale=0.5]{chapters/chapter_4/SPN.png}
+    \includegraphics[scale=0.5]{chapters/chapter_3/SPN.png}
 \end{figure}
 \section{分组密码的运行模式}
 上一节讨论了在对明文分好组后，每组内常见的加密方式。本节讨论的，则是组与组之间输入和输出的关系。在这里，假设将明文$M$分成了$m_1, m_2, \ldots, m_n$共$n$个等长的组，在每组内，加密算法为$\E{k}{m}$, 解密算法为$\D{k}{c}$.
@@ -55,19 +55,19 @@ c_i=\E{k}{m_i}
 其加密过程如图所示（图源wiki）：
 \begin{figure}[H]
 \centering
-\includegraphics[scale=1]{chapters/chapter_4/ECB.eps}
+\includegraphics[scale=1]{chapters/chapter_3/ECB.eps}
 \end{figure}
 
 ECB模式极不安全。比如说，我想用ECB模式的AES密码体系加密东南大学的校徽：
 \begin{figure}[H]
 \centering
-\includegraphics[width=10em]{chapters/chapter_4/ECB_origin.jpg}
+\includegraphics[width=10em]{chapters/chapter_3/ECB_origin.jpg}
 \end{figure}
 
 结果为
 \begin{figure}[H]
 \centering
-\includegraphics[width=10em]{chapters/chapter_4/ECB_result.jpg}
+\includegraphics[width=10em]{chapters/chapter_3/ECB_result.jpg}
 \end{figure}
 \subsection{密码分组链接模式(CBC)}
 对于每组，其加密的输入为当前明文组与前一密文组的异或。也就是说，
@@ -79,7 +79,7 @@ c_i=\E{k}{m_i\oplus c_{i-1}}=\E{k}{m_i\oplus \E{k}{m_{i-1}}}
 其加密过程如图所示（图源wiki）：
 \begin{figure}[H]
 \centering
-\includegraphics[scale=1]{chapters/chapter_4/CBC.eps}
+\includegraphics[scale=1]{chapters/chapter_3/CBC.eps}
 \end{figure}
 \subsection{密码反馈模式(CFB)}
 CFB模式需要一个移位寄存器。同时，CFB模式也提供了一个可选的参数$j$, 通常取$j=8$. 其过程如下：\par
@@ -97,13 +97,13 @@ S_i=\pth{\pth{S_{i-1} << x}+c_i}\bmod{64}
 如果忽略移位寄存器，其大致的工作原理可由下图表示（图源wiki）：
 \begin{figure}[H]
 \centering
-\includegraphics[scale=1]{chapters/chapter_4/CFB.eps}
+\includegraphics[scale=1]{chapters/chapter_3/CFB.eps}
 \end{figure}
 \subsection{输出反馈模式(OFB)}
 OFB模式与CFB模式极其类似，区别仅在于每组向移位寄存器内的输入为上一组内与明文异或之前的输出。如下图所示（图源wiki）：
 \begin{figure}[H]
 \centering
-\includegraphics[scale=1]{chapters/chapter_4/OFB.eps}
+\includegraphics[scale=1]{chapters/chapter_3/OFB.eps}
 \end{figure}
 
 从图中可以看到，每组之间传递的数据与明文无关。因此，在OFB中，明文出错只会影响该组的密文，之后的密文都不会被影响。\par
@@ -113,7 +113,7 @@ OFB模式与CFB模式极其类似，区别仅在于每组向移位寄存器内�
 其过程如图所示（图源wiki）：
 \begin{figure}[H]
 \centering
-\includegraphics[scale=1]{chapters/chapter_4/CTR.eps}
+\includegraphics[scale=1]{chapters/chapter_3/CTR.eps}
 \end{figure}
 
 根据上图，我们可以发现CTR的独一无二的好处：可以并行加密。其每组加密不需要上组的任何信息，只需要该组对应的计数器值即可。
@@ -602,7 +602,7 @@ $m_1\oplus m_2$即将两个16位的二进制串逐比特异或。
 和其他分组密码类似，IDEA也是采用了多次重复轮结构的步骤。其轮结构如图所示（图源wiki）：
 \begin{figure}[H]
 \centering
-\includegraphics[scale=0.5]{chapters/chapter_4/IDEA_round.eps}
+\includegraphics[scale=0.5]{chapters/chapter_3/IDEA_round.eps}
 \end{figure}
 
 在每一轮中，一共需要输入6个16位的子密钥，并且输入为4组16位的二进制串，输出也为4组16位的二进制串。
@@ -611,7 +611,7 @@ IDEA加密算法接受64位明文和128位密钥。对于密钥，将其通过�
 首先，将64位明文分成4组等长的子串，然后输入轮结构中。在经过8轮轮结构后，将输出的结构通过如图所示的输出变换（图源wiki），得到密文。
 \begin{figure}[H]
 \centering
-\includegraphics[scale=0.5]{chapters/chapter_4/IDEA_output.png}
+\includegraphics[scale=0.5]{chapters/chapter_3/IDEA_output.png}
 \end{figure}
 
 而子密钥的生成算法则相对比较直接：\par
