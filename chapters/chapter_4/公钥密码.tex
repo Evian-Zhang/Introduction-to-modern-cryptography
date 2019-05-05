@@ -443,36 +443,29 @@ c^d\equiv m^{ed}\equiv m^{k\varphi(n)+1}\pmod{n}
 从而证明了ElGamal密码的正确性。
 \subsection{ElGamal密码的安全性}
 通过对ElGamal密码的算法介绍，我们可以发现，其安全性，也就是由公钥无法推出私钥，是建立在已知$y=g^x$中的$y$和$g$, 却无法得到$x$的问题。这个问题被称作离散对数问题。
-\subsection{模$p$整数群上的ElGamal}
-ElGamal密码体系由于循环群$G$的选取不同而可以产生许多不同的加密方法。而我们知道，最简单的循环群就是模$p$整数群$\Z_p$。即由$1$到$p-1$的整数构成的集合$\Z_p=\brace{1, 2,\ldots, p-1}$. 其上的乘法定义为
-\[a\cdot b=ab\bmod{p}\]
-
-那么根据数论知识我们可以得到，
-\[\exists g\in \Z_p, \forall x\in\Z_p, \exists k\in \Z, g=x^k\]
-意思是说对于任意模$p$整数群$\Z_p$，存在生成元$g$, 使得$\Z_p$中的每个元素都是$g$的幂。比如说，对于$\Z_5=\brace{1, 2, 3, 4}$, $3$是其一个生成元，由于
-\[3^0=1, 3^1=3, 3^2=4, 3^3=2, 3^4=1,\ldots\]
-因此每一个$\Z_5$中的元素都可以表示成$3$的幂。\par
-那么，在$\Z_p$上的ElGamal密码体系即为：
+\subsection{模$n$整数乘法群上的ElGamal}
+ElGamal密码体系由于循环群$G$的选取不同而可以产生许多不同的加密方法。而数论知识告诉我们，对于奇素数的幂$n=p^k$, 模$n$整数乘法群$\Z/n\Z=\{m\mid\pth{m, n}=1, 0\leq m\leq n-1\}$构成一个循环群。\par
+那么，在模$n$整数乘法群上的ElGamal密码体系即为：
 \subsubsection{公钥-私钥生成}
 \begin{enumerate}
-	\item 选取素数$p$, 构成$p-1$阶循环群$\Z_p$, 选取其生成元$g$
+	\item 选取素数$p$, 构成模$p$整数乘法群$\Z/p\Z$, 选取其一个生成元$g$
 	\item 在$1$到$p-1$中选一个数$x$
-	\item 计算$y=g^x$
+	\item 计算$y=g^x\bmod{p}$
 	\item 公钥为$\pth{p, g, y}$, 私钥为$x$
 \end{enumerate}
 \subsubsection{加密}
 假设明文对应的二进制数为$m$
 \begin{enumerate}
 	\item 在$1$到$p-1$中选一个数$k$
-	\item 计算$C_1=g^k, s=y^k$
-	\item 计算$C_2=m\cdot s=m\cdot y^k$
+	\item 计算$C_1=g^k\bmod{p}, s=y^k\bmod{p}$
+	\item 计算$C_2=m\cdot s\bmod{p}=m\cdot y^k\bmod{p}$
 	\item 密文为$\pth{C_1, C_2}$
 \end{enumerate}
 \subsubsection{解密}
 假设密文为$\pth{C_1, C_2}$
 \begin{enumerate}
-	\item 计算$s=C_1^x$
-	\item 计算$m=C_2\cdot s^{-1}$, 即为明文
+	\item 计算$s=C_1^x\bmod{p}$
+	\item 计算$m=C_2\cdot s^{-1}\bmod{p}$, 即为明文
 \end{enumerate}
 \subsection{椭圆曲线}
 在常用的ElGamal密码中，$G$常被描述成有限域上的椭圆曲线上的点构成的群。其定义为：

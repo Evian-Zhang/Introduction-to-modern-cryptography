@@ -161,4 +161,33 @@ S&&&预先获得&&服务请求2\\\hline
 \section{基于公钥密码的会话密钥分配协议}
 相比于对称密码，公钥密码有起不可比拟的好处。公钥密码可以在不安全的信道中实现安全通信。但是，由于涉及到复杂的运算，因此公钥密码的加密速度极慢。考虑到在对称密码中的安全通信需要保护两个东西：明文和密钥。因此，公钥密码被用在了另一个地方：对称密码体系的密钥分配。安全通信双方可以先通过公钥密码体系来获得一个共享的会话密钥，再利用会话密钥来对称加密明文，达到既安全又高效的效果。在基于公钥密码的会话密钥的分配方法中，最常用的就是Diffie-Hellman密钥交换协议。\par
 类似于ElGamal密码，Diffie-Hellman密钥交换协议是基于离散对数问题。首先，我们回忆一下一些基本概念：\par
-对于群
+对于群$G$及$G$上的运算$\cdot$, 将$n$个$g$相运算$g\cdot g\cdot \cdots \cdot g$的结果记作$g^n$.\par
+如果存在一个元素$g\in G$, 使得对于任意元素$x\in G$, 存在$n$使得$a=g^n$, 则称$G$为循环群，$g$为$G$的生成元。\par
+如果$G$的元素有$q$个，则称$G$是$q$阶的。\par
+而数论知识告诉我们，若整数$n$是奇素数的幂$p^k$, 那么整数模$n$乘法群$\Z/n\Z=\{m\mid \pth{m, n}=1, 0\leq m\leq n-1\}$对于模$n$乘法构成一个循环群。因此，如果要形象理解Diffie-Hellman密钥交换协议，不妨把其中的循环群理解成整数模$n$乘法群。\par
+Diffie-Hellman密钥交换的具体步骤为：\par
+假设$A$与$B$想要共享一个会话密钥。
+\begin{enumerate}
+	\item $A$与$B$协定一个有限循环群$G$和它的一个生成元$g$
+	\item $A$选取一个随机数$a\in\mathbb{N}$, 并向$B$发送消息：
+	\[A\to B: g^a\]
+	\item $B$选取一个随机数$b\in\mathbb{N}$, 并向$A$发送消息：
+	\[B\to A: g^b\]
+	\item $A$通过计算获得密钥$K$
+	\[K=\pth{g^b}^a\]
+	\item $B$通过计算获得密钥$K$
+	\[K=\pth{g^a}^b\]
+\end{enumerate}
+
+更具体地，如果对于整数模$n$乘法循环群来说，其步骤为：
+\begin{enumerate}
+	\item $A$与$B$协定一个素数$p$和$\Z/p\Z$的一个生成元$g$
+	\item $A$选取一个随机数$a\in\mathbb{N}$, 并向$B$发送消息：
+	\[A\to B: g^a\bmod{p}\]
+	\item $B$选取一个随机数$b\in\mathbb{N}$, 并向$A$发送消息：
+	\[B\to A: g^b\bmod{p}\]
+	\item $A$通过计算获得密钥$K$
+	\[K=\pth{g^b\bmod{p}}^a\bmod{p}\]
+	\item $B$通过计算获得密钥$K$
+	\[K=\pth{g^a\bmod{p}}^b\bmod{p}\]
+\end{enumerate}
