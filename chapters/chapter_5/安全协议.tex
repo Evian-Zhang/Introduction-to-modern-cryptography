@@ -191,3 +191,135 @@ Diffie-Hellman密钥交换的具体步骤为：\par
 	\item $B$通过计算获得密钥$K$
 	\[K=\pth{g^a\bmod{p}}^b\bmod{p}\]
 \end{enumerate}
+\section{秘密共享}
+\subsection{定义}
+我们考虑一个问题：一共有$n$个人参与一项秘密的工程，他们将文件锁在一个保险柜里，这个保险柜只有在不少于$m$个相关的人在场的情况下才能被打开。那么至少需要多少把锁？每个人至少要携带多少把钥匙？\par
+运用组合数学的知识，我们可以知道，至少需要$C_n^m$把锁，而每个人至少需要携带$C_{n-1}^{m-1}$把钥匙。\par
+假设一共有$11$个人，而这个保险柜只有在不少于$6$人的情况下才能被打开，那么至少需要$462$把锁，每个人至少携带$252$把钥匙。这无疑是一个巨大的数字。而这种情况在现实中却是真实存在的，如一个国家的核按钮必须由多个人在场的情况下才能被使用。那么，有没有更简易的方法能实现这个目的呢？这就需要使用密码学中Shamir提出的的秘密共享理论。\par
+其正式定义如下：\par
+假设要被分享的秘密为数据$D$, 将其分为$n$个份额$D_1, D_2,\ldots, D_n$, 满足：
+\begin{itemize}
+	\item 如果获得大于等于$k$个份额$D_i$, 那么计算$D$是容易的
+	\item 如果获得小于等于$k-1$个份额$D_i$, 那么不可以计算$D$
+\end{itemize}
+
+称这种方案为一个$\pth{k, n}$门限方案，$k$称为门限值。\par
+要讨论一个秘密共享方案，其包含两个方面：秘密的分割与秘密的恢复。秘密的分割即为将秘密分为$n$个份额，而秘密的恢复即为使用$k$个份额恢复秘密。
+\subsection{完善性}
+类似于我们在密码体制的安全性时的讨论，我们也可以定义一个秘密共享的完善性。其文字化的叙述如下：
+\begin{Definition}
+如果一个参与者或一组未经授权的参与者在猜测被共享的秘密时，并不比局外人猜秘密时有优势，即：少于$k$个参与者所持有的部分秘密信息得不到秘密$D$的任何信息，则称该秘密共享方案是完善的。
+\end{Definition}
+
+事实上，也是存在完善的秘密共享方案的数学形式化定义，其也类似于密码体制的安全性，通过引入秘密空间、份额空间，并利用一些概率公式来描述。这里就不再赘述。\par
+类似于无条件安全的密码体制，无条件安全的秘密共享方案也需要满足一个条件：
+\begin{theorem}
+一个秘密共享方案是无条件安全的当且仅当它的秘密空间大小与其份额空间大小相同。
+\end{theorem}
+
+用通俗的话来说，如果一个秘密共享方案需要共享的秘密是一个长度为$n$比特的二进制串，那么每个参与者获得的份额也至少是$n$比特的二进制串。
+\subsection{Shamir门限方案}
+Shamir提出了一种$\pth{k, n}$门限方案：\par
+假设被共享的秘密为$D$, 要生成的门限方案为$\pth{k, n}$门限方案，$n$个参与者分别为$P_1, P_2,\ldots, P_n$.
+\subsubsection{秘密的分割}
+\begin{enumerate}
+	\item 选取一个大素数$p\geq n+1, p>D$. 构造有限域$\GF\pth{p}$
+	\item 在$\GF\pth{p}$内随机选取$k-1$个非零元素$a_1, a_2,\ldots, a_{k-1}$
+	\item 构造函数$f\pth{x}=D+a_1x+a_2x^2+\cdots +a_{k-1}x^{k-1}$, 其中的运算均为$\GF\pth{p}$上的运算
+	\item 对于第$i$个参与者，其获得的份额为$\pth{i, f(i)}$
+\end{enumerate}
+\subsubsection{秘密的恢复}
+假设集齐了$k$个参与者$P_{i_1}, P_{i_2}, \ldots, P_{i_k}$, 那么秘密可以由以下公式计算：
+\begin{equation}
+D=\pth{-1}^{k-1}\sum_{j=1}^kf(i_j)\prod_{1\leq l\leq k, l\neq j}i_l\cdot\pth{i_j-i_l}^{-1}
+\end{equation}
+其中的所有运算都是$\GF\pth{p}$上的运算。
+\subsubsection{正确性}
+首先论证秘密确实可以由上述公式恢复：\par
+对于这$k$个参与者获得的份额，根据其分割的公式，可以得到以下线性方程组：
+\begin{equation}
+\begin{dcases}
+D+a_1i_1+a_2i_1^2+\cdots +a_{k-1}i_1^{k-1}=f(i_1)\\
+D+a_1i_2+a_2i_2^2+\cdots +a_{k-1}i_2^{k-1}=f(i_2)\\
+\cdots\\
+D+a_1i_k+a_2i_k^2+\cdots +a_{k-1}i_k^{k-1}=f(i_k)
+\end{dcases}
+\end{equation}
+
+这是关于$\pth{D, a_1, a_2,\ldots, a_{k-1}}$的$k$个$k$元线性方程组。根据Lagrange插值公式：
+\begin{equation}
+f\pth{x}=\sum_{j=1}^kf(i_j)\prod_{1\leq l\leq k, l\neq j}\pth{x-i_l}\cdot\pth{x_j-x_l}^{-1}
+\end{equation}
+
+其中的运算都是$\GF\pth{p}$上的运算。\par
+因此，
+\begin{equation}
+D=f(0)=\pth{-1}^{k-1}\sum_{j=1}^kf(i_j)\prod_{1\leq l\leq k, l\neq j}i_l\cdot\pth{i_j-i_l}^{-1}
+\end{equation}
+
+接下来论证$k-1$个参与者不可以获得秘密：\par
+根据秘密分割的公式，$k-1$个参与者只能得到$k-1$个$k$元线性方程组，其在$\GF\pth{p}$上的解$D$有$p$个。因此，其获得不了关于$D$的任何信息。
+\subsection{基于中国剩余定理的门限方案}
+假设被共享的秘密为$D$, 要生成的门限方案为$\pth{k, n}$门限方案，$n$个参与者分别为$P_1, P_2,\ldots, P_n$.
+\subsubsection{秘密的分割}
+\begin{enumerate}
+	\item 选取$n$个大于1的整数$m_1, m_2, \ldots, m_n$, 满足：
+	\begin{itemize}
+		\item $m_1<m_2<\cdots <m_n$
+		\item $\forall i\neq j, \pth{m_i, m_j}=1$
+		\item $m_1m_2\cdots m_k>D>m_{n-k+2}m_{n-k+3}\cdots m_n$
+	\end{itemize}
+	\item 计算$M=m_1m_2\cdots m_n$
+	\item 计算$s_i=D\bmod{m_i}, i=1, 2,\ldots, n$
+	\item 对于第$i$个参与者，其份额为$\pth{s_i, m_i, M}$
+\end{enumerate}
+\subsubsection{秘密的恢复}
+假设集齐了$k$个参与者$P_{i_1}, P_{i_2}, \ldots, P_{i_k}$, 那么秘密可以由以下方法
+\begin{enumerate}
+	\item 计算$\ext M_{i_j}=\frac{M}{m_{i_j}}$, $N_{i_j}$是$M_{i_j}$模$m_{i_j}$的逆，$y_{i_j}=s_{i_j}M_{i_j}N_{i_j}$
+	\item 秘密的计算公式为
+	\begin{equation}
+	D=\sum_{j=1}^ky_{i_j}\bmod{\prod_{j=1}^km_{i_j}}
+	\end{equation}
+\end{enumerate}
+\subsubsection{正确性}
+首先论证秘密确实可以恢复：\par
+根据秘密分割的公式，我们可以得到以下同余方程组：
+\begin{equation}
+\begin{dcases}
+D\equiv s_{i_1}\pmod{m_{i_1}}\\
+D\equiv s_{i_2}\pmod{m_{i_2}}\\
+\cdots\\
+D\equiv s_{i_k}\pmod{m_{i_k}}
+\end{dcases}
+\end{equation}
+
+运用中国剩余定理，即可得到
+\begin{equation}
+D\equiv\sum_{j=1}^ky_{i_j}\pmod{\prod_{j=1}^km_{i_j}}
+\end{equation}
+
+下面证明
+\[D=\sum_{j=1}^ky_{i_j}\bmod{\prod_{j=1}^km_{i_j}}\]
+
+由秘密分割的公式，$D$是同余方程组
+\begin{equation}
+\begin{dcases}
+D\equiv s_{1}\pmod{m_{1}}\\
+D\equiv s_{2}\pmod{m_{2}}\\
+\cdots\\
+D\equiv s_{n}\pmod{m_{n}}
+\end{dcases}
+\end{equation}
+的解。\par
+记$\ext D'=\sum_{j=1}^ky_{i_j}\bmod{\prod_{j=1}^km_{i_j}}$, 那么有$\forall 1\leq j\leq k, D'\equiv D\pmod{s_{i_j}}$. 因此，$m_{i_j}\mid D'-D$. 故
+\[\brack{m_{i_1}, m_{i_2}, \ldots, m_{i_k}}=\prod_{j=1}^km_{i_j}\mid D'-D\]
+故
+\[D'\equiv D\pmod{m_{i_1}m_{i_2}\cdots m_{i_k}}\]
+
+又由于$D', D<m_1m_2\cdots m_k\leq m_{i_1}m_{i_2}\cdots m_{i_k}$, 故$D'=D$.\par
+此外，如果参与者少于$k$个，不妨设为$k-1$个，那么所建立的方程组的解
+\[D'=\sum_{j=1}^{k-1}y_{i_j}\bmod{\prod_{j=1}^{k-1}m_{i_j}}\]
+满足
+\[D'<m_{i_1}m_{i_2}\cdots m_{i_{k-1}}<m_{n-k+2}m_{n-k+3}\cdots m_n<D\]
+故不是秘密。
