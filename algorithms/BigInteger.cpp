@@ -411,6 +411,12 @@ BigInteger BigInteger::operator/(const BigInteger &bigInt) const
 
 BigInteger BigInteger::operator%(const BigInteger &bigInt) const
 {
+    int length = this->length - bigInt.length + 1;
+    
+    bool *value;
+    if (length > 0)
+        value = new bool[length];
+
     BigInteger remainder(*this);
     BigInteger divisor(bigInt);
     remainder.sign = true;
@@ -435,6 +441,10 @@ BigInteger BigInteger::operator%(const BigInteger &bigInt) const
     }
     
     remainder.sign = this->sign;
+    
+    if (length > 0)
+        delete[] value;
+
     return remainder;
 }
 
@@ -506,9 +516,9 @@ BigInteger BigInteger::mulmod(const BigInteger mul1, const BigInteger mul2, cons
     BigInteger modMul1 = mul1;
     for (int digit = 0; digit < mul2.length; digit++)
     {
-        modMul1 = (modMul1 << 1) % mod;
         if (mul2.value[digit])
             product = (product + modMul1) % mod;
+        modMul1 = (modMul1 << 1) % mod;
     }
     
     return product;
