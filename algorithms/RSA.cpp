@@ -97,7 +97,7 @@ BigInteger RSA_DEC(BigInteger cipher, BigInteger d, BigInteger p, BigInteger q)
     BigInteger tmp2 = BigInteger::mulmod(p, eq, n);
     tmp2 = BigInteger::mulmod(tmp2, mq, n);
     
-    return tmp1 + tmp2;
+    return (tmp1 + tmp2) % mod;
 }
 
 int main(int argc, const char * argv[])

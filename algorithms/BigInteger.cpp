@@ -803,7 +803,7 @@ char *BigInteger::ASCIIString() const
             }
             ch += a;
         }
-        *(str + index) = ch - 128;
+        *(str + index) = ch;
     }
     *(str + this->length / 8) = '\0';
     return str;
@@ -850,10 +850,23 @@ char *BigInteger::decString() const
         tmp /= 10;
         length++;
     }
-    char *result = new char[length + 1];
-    for (int ch = length - 1; ch >= 0; ch--)
-        result[ch] = str[length - ch - 1];
-    result[length] = '\0';
+    char *result;
+    if (this->sign)
+    {
+        result = new char[length + 1];
+        
+        for (int ch = length - 1; ch >= 0; ch--)
+            result[ch] = str[length - ch - 1];
+        result[length] = '\0';
+    }
+    else
+    {
+        result = new char[length + 2];
+        result[0] = '-';
+        for (int ch = length; ch >= 1; ch--)
+            result[ch] = str[length - ch];
+        result[length + 1] = '\0';
+    }
     delete[] str;
     return result;
 }
@@ -917,7 +930,7 @@ BigInteger BigInteger::inverse(const BigInteger a, const BigInteger mod)
     BigInteger inverse = 0;
     BigInteger tmp = 0;
     BigInteger::extendGcd(a, mod, inverse, tmp);
-    return inverse;
+    return (inverse % mod + mod) % mod;
 }
 
 BigInteger BigInteger::getRandBit(int length)
