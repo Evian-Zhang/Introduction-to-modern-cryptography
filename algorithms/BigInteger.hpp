@@ -15,6 +15,7 @@
 class BigInteger
 {
     int length;
+    int arithmeticLength;
     bool *value;
     bool sign;
     

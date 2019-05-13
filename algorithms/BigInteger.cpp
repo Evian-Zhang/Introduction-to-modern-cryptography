@@ -11,6 +11,7 @@
 BigInteger::BigInteger()
 {
     this->length = 0;
+    this->arithmeticLength = 0;
     this->value = NULL;
     this->sign = true;
 }
@@ -20,6 +21,9 @@ BigInteger::BigInteger(int length, bool *value, bool sign)
     this->length = length;
     this->value = value;
     this->sign = sign;
+    this->arithmeticLength = this->length;
+    while (this->arithmeticLength > 0 && this->value[this->arithmeticLength - 1] == false)
+        this->arithmeticLength--;
 }
 
 BigInteger::BigInteger(const int number)
@@ -27,6 +31,7 @@ BigInteger::BigInteger(const int number)
     if (!number)
     {
         this->length = 0;
+        this->arithmeticLength = 0;
         this->value = NULL;
         this->sign = true;
     }
@@ -35,6 +40,7 @@ BigInteger::BigInteger(const int number)
         int tmp1 = number;
         int tmp2 = number;
         
+        //set sign
         if (number > 0)
             this->sign = true;
         else
@@ -44,6 +50,7 @@ BigInteger::BigInteger(const int number)
             tmp2 = tmp1;
         }
         
+        //set length
         this->length = 1;
         while (tmp1 >= 2)
         {
@@ -51,6 +58,10 @@ BigInteger::BigInteger(const int number)
             tmp1 /= 2;
         }
         
+        //set arithmeticLength
+        this->arithmeticLength = this->length;
+        
+        //set value
         this->value = new bool[this->length];
         for (int digit = 0; digit < this->length; digit++)
         {
@@ -65,6 +76,7 @@ BigInteger::BigInteger(const unsigned int number)
     if (!number)
     {
         this->length = 0;
+        this->arithmeticLength = 0;
         this->value = NULL;
         this->sign = true;
     }
@@ -73,8 +85,10 @@ BigInteger::BigInteger(const unsigned int number)
         unsigned int tmp1 = number;
         unsigned int tmp2 = number;
         
+        //set sign
         this->sign = true;
         
+        //set length
         this->length = 1;
         while (tmp1 >= 2)
         {
@@ -82,6 +96,10 @@ BigInteger::BigInteger(const unsigned int number)
             tmp1 /= 2;
         }
         
+        //set arithmeticLength
+        this->arithmeticLength = this->length;
+        
+        //set value
         this->value = new bool[this->length];
         for (int digit = 0; digit < this->length; digit++)
         {
@@ -114,9 +132,19 @@ BigInteger::BigInteger(char *str)
                     break;
                 }
         
+        //set length
         this->length = 4 * (length - 2);
+        
+        //set value
         this->value = value;
+        
+        //set sign
         this->sign = true;
+        
+        //set arithmeticLength
+        this->arithmeticLength = this->length;
+        while (this->arithmeticLength > 0 && this->value[this->arithmeticLength - 1] == false)
+            this->arithmeticLength--;
     }
     else
     {
@@ -129,16 +157,34 @@ BigInteger::BigInteger(char *str)
                 value[digit] = true;
         }
         
+        //set length
         this->length = length;
+        
+        //set value
         this->value = value;
+        
+        //set sign
         this->sign = true;
+        
+        //set arithmeticLength
+        this->arithmeticLength = this->length;
+        while (this->arithmeticLength > 0 && this->value[this->arithmeticLength - 1] == false)
+            this->arithmeticLength--;
     }
 }
 
 BigInteger::BigInteger(const BigInteger &bigInt)
 {
+    //set sign
     this->sign = bigInt.sign;
+    
+    //set length
     this->length = bigInt.length;
+    
+    //set arithmeticLength
+    this->arithmeticLength = bigInt.arithmeticLength;
+    
+    //set value
     if (this->length)
     {
         this->value = new bool[this->length];
@@ -193,15 +239,15 @@ bool BigInteger::operator<(const BigInteger &bigInt) const
     if (this->sign && !bigInt.sign)
         return false;
     
-    if (this->length < bigInt.length)
+    if (this->arithmeticLength < bigInt.arithmeticLength)
         return this->sign;
-    if (this->length > bigInt.length)
+    if (this->arithmeticLength > bigInt.arithmeticLength)
         return !this->sign;
     
-    if (!this->length)
+    if (!this->arithmeticLength)
         return false;
     
-    for (int digit = this->length - 1; digit >= 0; digit--)
+    for (int digit = this->arithmeticLength - 1; digit >= 0; digit--)
     {
         if (*(this->value + digit) > bigInt.value[digit])
             return !this->sign;
@@ -219,11 +265,11 @@ bool BigInteger::operator>(const BigInteger &bigInt) const
 
 bool BigInteger::operator==(const BigInteger &bigInt) const
 {
-    if (this->sign == bigInt.sign && this->length == bigInt.length)
+    if (this->sign == bigInt.sign && this->arithmeticLength == bigInt.arithmeticLength)
     {
-        if (!this->length)
+        if (!this->arithmeticLength)
             return true;
-        for (int digit = this->length - 1; digit >= 0; digit--)
+        for (int digit = this->arithmeticLength - 1; digit >= 0; digit--)
             if (*(this->value + digit) != bigInt.value[digit])
                 return false;
         return true;
@@ -239,14 +285,14 @@ bool BigInteger::operator<=(const BigInteger &bigInt) const
     if (this->sign && !bigInt.sign)
         return false;
     
-    if (this->length < bigInt.length)
+    if (this->arithmeticLength < bigInt.arithmeticLength)
         return this->sign;
-    if (this->length > bigInt.length)
+    if (this->arithmeticLength > bigInt.arithmeticLength)
         return !this->sign;
     
-    if (!this->length)
+    if (!this->arithmeticLength)
         return true;
-    for (int digit = this->length - 1; digit >= 0; digit--)
+    for (int digit = this->arithmeticLength - 1; digit >= 0; digit--)
     {
         if (*(this->value + digit) > bigInt.value[digit])
             return !this->sign;
@@ -312,7 +358,7 @@ BigInteger BigInteger::operator+(const BigInteger &bigInt) const
         return bigInt.operator-(tmp);
     }
     
-    int length = this->length > bigInt.length ? this->length : bigInt.length;
+    int length = this->arithmeticLength > bigInt.arithmeticLength ? this->arithmeticLength : bigInt.arithmeticLength;
     if (!length)
         return BigInteger(0, NULL, true);
     length++;
@@ -323,9 +369,9 @@ BigInteger BigInteger::operator+(const BigInteger &bigInt) const
     {
         bool adder1 = false;
         bool adder2 = false;
-        if (digit < this->length)
+        if (digit < this->arithmeticLength)
             adder1 = this->value[digit];
-        if (digit < bigInt.length)
+        if (digit < bigInt.arithmeticLength)
             adder2 = bigInt.value[digit];
         *(value + digit) = adder1 ^ adder2 ^ overflow;
         overflow = (adder1 && adder2) || (adder1 && overflow) || (adder2 && overflow);
@@ -353,26 +399,26 @@ BigInteger BigInteger::operator-(const BigInteger &bigInt) const
         return result;
     }
     
-    if (!this->length)
+    if (!this->arithmeticLength)
         return BigInteger(0, NULL, true);
     
-    bool *value = new bool[this->length];
+    bool *value = new bool[this->arithmeticLength];
     bool carry = false;
-    for (int digit = 0; digit < this->length; digit++)
+    for (int digit = 0; digit < this->arithmeticLength; digit++)
     {
         bool minuend = false;
         bool subtrahend = false;
-        if (digit < this->length)
+        if (digit < this->arithmeticLength)
             minuend = *(this->value + digit);
-        if (digit < bigInt.length)
+        if (digit < bigInt.arithmeticLength)
             subtrahend = bigInt.value[digit];
         
         *(value + digit) = (!minuend && !subtrahend && carry) || (!minuend && subtrahend && !carry) || (minuend && !subtrahend && !carry) || (minuend && subtrahend && carry);
         carry = (!minuend && !(!subtrahend && !carry)) || (minuend && subtrahend && carry);
     }
     
-    int length = this->length;
-    for (int digit = this->length - 1; digit >= 0; digit--)
+    int length = this->arithmeticLength;
+    for (int digit = this->arithmeticLength - 1; digit >= 0; digit--)
     {
         if (value[digit])
             break;
@@ -385,11 +431,11 @@ BigInteger BigInteger::operator-(const BigInteger &bigInt) const
 
 BigInteger BigInteger::operator*(const BigInteger &bigInt) const
 {
-    if (this->length == 0 || bigInt.length == 0)
+    if (this->arithmeticLength == 0 || bigInt.arithmeticLength == 0)
         return BigInteger(0, NULL, true);
     
     BigInteger result(0, NULL, true);
-    for (int digit = 0; digit < bigInt.length; digit++)
+    for (int digit = 0; digit < bigInt.arithmeticLength; digit++)
         if (bigInt.value[digit])
         {
             BigInteger tmp = *this << digit;
@@ -403,10 +449,10 @@ BigInteger BigInteger::operator*(const BigInteger &bigInt) const
 
 BigInteger BigInteger::operator/(const BigInteger &bigInt) const
 {
-    if (!this->length || this->length < bigInt.length)
+    if (!this->arithmeticLength || this->arithmeticLength < bigInt.arithmeticLength)
         return BigInteger(0, NULL, true);
     
-    int length = this->length - bigInt.length + 1;
+    int length = this->arithmeticLength - bigInt.arithmeticLength + 1;
     
     bool *value = new bool[length];
     BigInteger remainder(*this);
@@ -415,7 +461,7 @@ BigInteger BigInteger::operator/(const BigInteger &bigInt) const
     divisor.sign = true;
     for (int digit = length - 1; digit >= 0; digit--)
     {
-        if (!remainder.length)
+        if (!remainder.arithmeticLength)
         {
             for (int i = digit; i >= 0; i--)
                 value[i] = false;
@@ -447,9 +493,9 @@ BigInteger BigInteger::operator/(const BigInteger &bigInt) const
 
 BigInteger BigInteger::operator%(const BigInteger &bigInt) const
 {
-    if (!this->length || this->length < bigInt.length)
+    if (!this->arithmeticLength || this->arithmeticLength < bigInt.arithmeticLength)
         return *this;
-    int length = this->length - bigInt.length + 1;
+    int length = this->arithmeticLength - bigInt.arithmeticLength + 1;
     
     bool *value = new bool[length];
     BigInteger remainder(*this);
@@ -458,7 +504,7 @@ BigInteger BigInteger::operator%(const BigInteger &bigInt) const
     divisor.sign = true;
     for (int digit = length - 1; digit >= 0; digit--)
     {
-        if (!remainder.length)
+        if (!remainder.arithmeticLength)
         {
             for (int i = digit; i >= 0; i--)
                 value[i] = false;
@@ -575,6 +621,9 @@ void BigInteger::append(bool *value, int length)
     delete[] this->value;
     this->value = newValue;
     this->length = newLength;
+    this->arithmeticLength = this->length;
+    while (this->arithmeticLength > 0 && this->value[this->arithmeticLength - 1] == false)
+        this->arithmeticLength--;
 }
 
 void BigInteger::append(const BigInteger &bigInt)
@@ -589,6 +638,9 @@ void BigInteger::append(const BigInteger &bigInt)
     delete[] this->value;
     this->value = newValue;
     this->length = newLength;
+    this->arithmeticLength = this->length;
+    while (this->arithmeticLength > 0 && this->value[this->arithmeticLength - 1] == false)
+        this->arithmeticLength--;
 }
 
 BigInteger BigInteger::slice(int start, int end) const
@@ -624,6 +676,9 @@ void BigInteger::limitTo(int length)
     delete[] this->value;
     this->value = value;
     this->length = length;
+    this->arithmeticLength = this->length;
+    while (this->arithmeticLength > 0 && this->value[this->arithmeticLength - 1] == false)
+        this->arithmeticLength--;
 }
 
 BigInteger &BigInteger::operator=(const BigInteger &bigInt)
@@ -635,6 +690,7 @@ BigInteger &BigInteger::operator=(const BigInteger &bigInt)
         delete[] this->value;
     
     this->length = bigInt.length;
+    this->arithmeticLength = bigInt.arithmeticLength;
     this->sign = bigInt.sign;
     if (this->length)
     {
@@ -713,7 +769,7 @@ int BigInteger::to_int() const
         return 0;
     
     int value = 0;
-    for (int digit = 0; digit < this->length; digit++)
+    for (int digit = 0; digit < this->arithmeticLength; digit++)
         if (this->value[digit])
         {
             int power = 1;
@@ -781,14 +837,15 @@ char *BigInteger::hexString() const
 
 char *BigInteger::decString() const
 {
-    if (!this->length)
+    if (!this->arithmeticLength)
         return NULL;
     char dec[10] = {'0', '1', '2', '3', '4', '5', '6', '7', '8', '9'};
-    char *str = new char[(int)(this->length * log(2) / log(10))];
+    char *str = new char[(int)(this->arithmeticLength * log(2) / log(10))];
     int length = 0;
     BigInteger tmp = *this;
     while (!(tmp == 0))
     {
+        BigInteger a = tmp % 10;
         str[length] = dec[(tmp % 10).to_int()];
         tmp /= 10;
         length++;
@@ -808,7 +865,7 @@ BigInteger BigInteger::mulmod(const BigInteger mul1, const BigInteger mul2, cons
     
     BigInteger product = 0;
     BigInteger modMul1 = mul1;
-    for (int digit = 0; digit < mul2.length; digit++)
+    for (int digit = 0; digit < mul2.arithmeticLength; digit++)
     {
         if (mul2.value[digit])
             product = (product + modMul1) % mod;
@@ -822,7 +879,7 @@ BigInteger BigInteger::fastExp(const BigInteger base, const BigInteger exponent,
 {
     BigInteger power = 1;
     
-    for (int digit = exponent.length - 1; digit >= 0; digit--)
+    for (int digit = exponent.arithmeticLength - 1; digit >= 0; digit--)
     {
         power = mulmod(power, power, mod);
         if (exponent.value[digit])
