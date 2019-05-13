@@ -10,6 +10,7 @@
 #define BigInteger_hpp
 
 #include <iostream>
+#include <math.h>
 
 class BigInteger
 {
@@ -24,6 +25,7 @@ class BigInteger
 public:
     BigInteger();
     BigInteger(const int number);
+    BigInteger(const unsigned int number);
     BigInteger(char *str);
     BigInteger(const BigInteger &bigInt);
     
@@ -31,6 +33,7 @@ public:
     
     friend std::ostream& operator<<(std::ostream &output, const BigInteger &bigInt);
     bool *getValue() const;
+    int getLength() const;
     
     bool operator<(const BigInteger &bigInt) const;
     bool operator>(const BigInteger &bigInt) const;
@@ -47,6 +50,18 @@ public:
     BigInteger operator*(const BigInteger &bigInt) const;
     BigInteger operator/(const BigInteger &bigInt) const;
     BigInteger operator%(const BigInteger &bigInt) const;
+    BigInteger operator&(const BigInteger &bigInt) const;
+    BigInteger operator|(const BigInteger &bigInt) const;
+    BigInteger operator^(const BigInteger &bigInt) const;
+    BigInteger operator~() const;
+    
+    BigInteger rotLeft(const int n) const;
+    BigInteger rotRight(const int n) const;
+    
+    void append(bool *value, int length);
+    void append(const BigInteger &bigInt);
+    BigInteger slice(int start, int end) const;
+    void limitTo(int length);
     
     BigInteger &operator=(const BigInteger &bigInt);
     BigInteger &operator+=(const BigInteger &bigInt);
@@ -57,6 +72,13 @@ public:
     static BigInteger getRand();
     
     static BigInteger getRandBit(int length);
+    
+    static BigInteger bigIntegerFromASCIIString(char *string);
+    
+    int to_int() const;
+    char *ASCIIString() const;
+    char *hexString() const;
+    char *decString() const;
     
     static BigInteger mulmod(const BigInteger mul1, const BigInteger mul2, const BigInteger mod);
     

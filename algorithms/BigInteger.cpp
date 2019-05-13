@@ -60,6 +60,37 @@ BigInteger::BigInteger(const int number)
     }
 }
 
+BigInteger::BigInteger(const unsigned int number)
+{
+    if (!number)
+    {
+        this->length = 0;
+        this->value = NULL;
+        this->sign = true;
+    }
+    else
+    {
+        unsigned int tmp1 = number;
+        unsigned int tmp2 = number;
+        
+        this->sign = true;
+        
+        this->length = 1;
+        while (tmp1 >= 2)
+        {
+            this->length++;
+            tmp1 /= 2;
+        }
+        
+        this->value = new bool[this->length];
+        for (int digit = 0; digit < this->length; digit++)
+        {
+            *(this->value + digit) = tmp2 % 2;
+            tmp2 /= 2;
+        }
+    }
+}
+
 BigInteger::BigInteger(char *str)
 {
     char hex[16] = {'0', '1', '2', '3', '4', '5', '6', '7', '8', '9', 'a', 'b', 'c', 'd', 'e', 'f'};
@@ -148,6 +179,11 @@ std::ostream& operator<<(std::ostream &output, const BigInteger &bigInt)
 bool *BigInteger::getValue() const
 {
     return this->value;
+}
+
+int BigInteger::getLength() const
+{
+    return this->length;
 }
 
 bool BigInteger::operator<(const BigInteger &bigInt) const
@@ -411,12 +447,11 @@ BigInteger BigInteger::operator/(const BigInteger &bigInt) const
 
 BigInteger BigInteger::operator%(const BigInteger &bigInt) const
 {
+    if (!this->length || this->length < bigInt.length)
+        return *this;
     int length = this->length - bigInt.length + 1;
     
-    bool *value;
-    if (length > 0)
-        value = new bool[length];
-
+    bool *value = new bool[length];
     BigInteger remainder(*this);
     BigInteger divisor(bigInt);
     remainder.sign = true;
@@ -441,11 +476,154 @@ BigInteger BigInteger::operator%(const BigInteger &bigInt) const
     }
     
     remainder.sign = this->sign;
-    
-    if (length > 0)
-        delete[] value;
-
+    delete[] value;
     return remainder;
+}
+
+BigInteger BigInteger::operator&(const BigInteger &bigInt) const
+{
+    if (!this->length)
+        return BigInteger(0, NULL, true);
+    
+    int length = this->length;
+    bool sign = true;
+    bool *value = new bool[length];
+    for (int digit = 0; digit < length; digit++)
+        value[digit] = this->value[digit] & bigInt.value[digit];
+    
+    return BigInteger(length, value, sign);
+}
+
+BigInteger BigInteger::operator|(const BigInteger &bigInt) const
+{
+    if (!this->length)
+        return BigInteger(0, NULL, true);
+    
+    int length = this->length;
+    bool sign = true;
+    bool *value = new bool[length];
+    for (int digit = 0; digit < length; digit++)
+        value[digit] = this->value[digit] | bigInt.value[digit];
+    
+    return BigInteger(length, value, sign);
+}
+
+BigInteger BigInteger::operator^(const BigInteger &bigInt) const
+{
+    if (!this->length)
+        return BigInteger(0, NULL, true);
+    
+    int length = this->length;
+    bool sign = true;
+    bool *value = new bool[length];
+    for (int digit = 0; digit < length; digit++)
+        value[digit] = (this->value[digit] & !bigInt.value[digit]) | (!this->value[digit] & bigInt.value[digit]);
+    
+    return BigInteger(length, value, sign);
+}
+
+BigInteger BigInteger::operator~() const
+{
+    if (!this->length)
+        return BigInteger(0, NULL, true);
+    
+    int length = this->length;
+    bool sign = true;
+    bool *value = new bool[length];
+    for (int digit = 0; digit < length; digit++)
+        value[digit] = !this->value[digit];
+    
+    return BigInteger(length, value, sign);
+}
+
+BigInteger BigInteger::rotLeft(const int n) const
+{
+    if (!this->length)
+        return BigInteger(0, NULL, true);
+    
+    int length = this->length;
+    bool sign = this->sign;
+    bool *value = new bool[length];
+    for (int digit = 0; digit < length; digit++)
+        *(value + digit) = this->value[(digit + length - n) % length];
+    
+    return BigInteger(length, value, sign);
+}
+
+BigInteger BigInteger::rotRight(const int n) const
+{
+    if (!this->length)
+        return BigInteger(0, NULL, true);
+    
+    int length = this->length;
+    bool sign = this->sign;
+    bool *value = new bool[length];
+    for (int digit = 0; digit < length; digit++)
+        *(value + digit) = this->value[(digit + n) % length];
+    return BigInteger(length, value, sign);
+}
+
+void BigInteger::append(bool *value, int length)
+{
+    int newLength = this->length + length;
+    bool *newValue = new bool[newLength];
+    for (int i = 0; i < length; i++)
+        newValue[i] = value[i];
+    for (int i = 0; i < this->length; i++)
+        newValue[i + length] = this->value[i];
+    
+    delete[] this->value;
+    this->value = newValue;
+    this->length = newLength;
+}
+
+void BigInteger::append(const BigInteger &bigInt)
+{
+    int newLength = this->length + bigInt.length;
+    bool *newValue = new bool[newLength];
+    for (int i = 0; i < bigInt.length; i++)
+        newValue[i] = bigInt.value[i];
+    for (int i = 0; i < this->length; i++)
+        newValue[i + bigInt.length] = this->value[i];
+    
+    delete[] this->value;
+    this->value = newValue;
+    this->length = newLength;
+}
+
+BigInteger BigInteger::slice(int start, int end) const
+{
+    int length = end - start;
+    bool sign = this->sign;
+    bool *value = new bool[length];
+    for (int digit = 0; digit < length; digit++)
+        value[digit] = this->value[start + digit];
+    
+    return BigInteger(length, value, sign);
+}
+
+void BigInteger::limitTo(int length)
+{
+    bool *value = new bool[length];
+    if (this->length <= length)
+    {
+        for (int digit = 0; digit < this->length; digit++)
+            value[digit] = this->value[digit];
+        int digit = this->length;
+        while (digit < length)
+        {
+            value[digit] = false;
+            digit++;
+        }
+    }
+    else
+    {
+        for (int digit = 0; digit < length; digit++)
+            value[digit] = this->value[digit];
+    }
+    delete[] this->value;
+    this->value = value;
+    this->length = length;
 }
 
 BigInteger &BigInteger::operator=(const BigInteger &bigInt)
@@ -505,6 +683,122 @@ BigInteger BigInteger::getRand()
     bool sign = true;
     
     return BigInteger(length, value, sign);
+}
+
+BigInteger BigInteger::bigIntegerFromASCIIString(char *string)
+{
+    int strLen = 0;
+    while (*(string + strLen) != '\0')
+        strLen++;
+    int length = strLen * 8;
+    if (!length)
+        return BigInteger(0, NULL, true);
+    
+    bool *value = new bool[length];
+    for (int word = strLen - 1; word >= 0; word--)
+    {
+        int ch = *(string + word);
+        for (int digit = 0; digit < 8; digit++)
+        {
+            *(value + (strLen - word - 1) * 8 + digit) = ch % 2;
+            ch /= 2;
+        }
+    }
+    return BigInteger(length, value, true);
+}
+
+int BigInteger::to_int() const
+{
+    if (!this->length)
+        return 0;
+    
+    int value = 0;
+    for (int digit = 0; digit < this->length; digit++)
+        if (this->value[digit])
+        {
+            int power = 1;
+            int i = 0;
+            while (i < digit)
+            {
+                power *= 2;
+                i++;
+            }
+            value += power;
+        }
+    return value;
+}
+
+char *BigInteger::ASCIIString() const
+{
+    if (!this->length)
+        return NULL;
+    char *str = new char[this->length / 8 + 1];
+    for (int index = 0; index < this->length / 8; index++)
+    {
+        int ch = 0;
+        for (int digit = 0; digit < 8; digit++)
+        {
+            int a = this->value[(this->length / 8 - index - 1) * 8 + digit];
+            int k = 0;
+            while (k < digit)
+            {
+                a *= 2;
+                k++;
+            }
+            ch += a;
+        }
+        *(str + index) = ch - 128;
+    }
+    *(str + this->length / 8) = '\0';
+    return str;
+}
+
+char *BigInteger::hexString() const
+{
+    if (!this->length)
+        return NULL;
+    char hex[16] = {'0', '1', '2', '3', '4', '5', '6', '7', '8', '9', 'a', 'b', 'c', 'd', 'e', 'f'};
+    char *str = new char[this->length / 4 + 1];
+    for (int index = 0; index < this->length / 4; index++)
+    {
+        int ch = 0;
+        for (int digit = 0; digit < 4; digit++)
+        {
+            int a = this->value[(this->length / 4 - index - 1) * 4 + digit];
+            int k = 0;
+            while (k < digit)
+            {
+                a *= 2;
+                k++;
+            }
+            ch += a;
+        }
+        *(str + index) = hex[ch];
+    }
+    *(str + this->length / 4) = '\0';
+    return str;
+}
+
+char *BigInteger::decString() const
+{
+    if (!this->length)
+        return NULL;
+    char dec[10] = {'0', '1', '2', '3', '4', '5', '6', '7', '8', '9'};
+    char *str = new char[(int)(this->length * log(2) / log(10))];
+    int length = 0;
+    BigInteger tmp = *this;
+    while (!(tmp == 0))
+    {
+        str[length] = dec[(tmp % 10).to_int()];
+        tmp /= 10;
+        length++;
+    }
+    char *result = new char[length + 1];
+    for (int ch = length - 1; ch >= 0; ch--)
+        result[ch] = str[length - ch - 1];
+    result[length] = '\0';
+    delete[] str;
+    return result;
 }
 
 BigInteger BigInteger::mulmod(const BigInteger mul1, const BigInteger mul2, const BigInteger mod)
