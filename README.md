@@ -2,7 +2,7 @@
 
 ## 全文 PDF
 
-本书的全文 PDF 可在[现代密码学简介.pdf](https://github.com/Evian-Zhang/Introduction-to-modern-cryptography/blob/master/现代密码学简介.pdf)中下载。本书的 tex 源代码可在本仓库中([Evian-Zhang/Introduction-to-modern-cryptography](https://github.com/Evian-Zhang/Introduction-to-modern-cryptography))中找到。本书内所有的代码可在本仓库中的 `algorithms` 目录下找到([Evian-Zhang/Introduction-to-modern-cryptography/algorithms](https://github.com/Evian-Zhang/Introduction-to-modern-cryptography/algorithms/))。
+本书的全文 PDF 可在[现代密码学简介.pdf](https://github.com/Evian-Zhang/Introduction-to-modern-cryptography/blob/master/现代密码学简介.pdf)中下载。本书的 tex 源代码可在本仓库中([Evian-Zhang/Introduction-to-modern-cryptography](https://github.com/Evian-Zhang/Introduction-to-modern-cryptography))中找到。本书内所有的代码可在本仓库中的 `algorithms` 目录下找到([Evian-Zhang/Introduction-to-modern-cryptography/algorithms](https://github.com/Evian-Zhang/Introduction-to-modern-cryptography/tree/master/algorithms/))。
 
 ## 现有章节
 
