@@ -25,9 +25,189 @@
 
 对于第二点，即算法的输出是固定长的。这是由于上述讨论中我们提到，从输出中敌手无法获得输入的任何信息，这里甚至包括输入的消息的长度。不仅如此，在实际操作中，由于“由输入求得输出的过程较容易”这一要求，如果输出是固定长的，那么程序中内存分配等问题就相对较容易。因此，现在通行的算法的输出都是固定长度的。同时，我们也应该了解到，这个“固定长”的长度一般是小于消息的长度的。\par
 用于确认消息没有篡改的算法被称为哈希函数(Hash fucntion). 又称为散列函数。其接受一个消息作为输入，产生的输出被称为该消息的摘要(digest).\par
-除了上述功能之外，由于其输出的长度是固定的，因此，哈希函数还有一个重要的用途：当我们要处理的数据很大时，将其通过哈希函数，输出成较小的数据，则更好处理。
-\subsection{Merkle-Damg\aa d结构}
-在密码学中，许多哈希函数都基于一个类似的结构——Merkle-Damg\aa d结构。首先，我们先介绍一下该结构的两个主要部分。
-\subsubsection{服从MD的填充算法}
+除了上述功能之外，由于其输出的长度是固定的，因此，哈希函数还有一个重要的用途：当我们要处理的数据很大时，将其通过哈希函数，压缩成较小的数据，则更好处理。
+\subsection{Merkle-Damg\aa rd结构}
+在密码学中，许多哈希函数都基于一个类似的结构——Merkle-Damg\aa rd结构。首先，我们先介绍一下该结构的两个主要部分。
+\subsubsection{服从MD结构的填充函数}
+对于正整数$b$来说，如果将所有长度为$b$的整数倍的二进制串构成的集合记作$B$, 将所有长度小于$2^b$的二进制串构成的集合记作$U$. 同时，对于长度为$b$的整数倍的二进制串$M$，将其从头开始分割为长度均为$b$的二进制子串，那么称每个子串为$M$的一个块。\par
+那么对于非空集合$D\subset U$, 以及函数$\mathrm{Pad}:D\to B$, 称满足以下条件的函数$\mathrm{Pad}$为一个相对于$b$的服从MD结构的填充函数：
+\begin{itemize}
+	\item 对于任意$M\in D$, $M$是二进制串$\mathrm{Pad}\pth{M}$的前缀
+	\item 对于任意$M_1, M_2\in D$, 如果$M_1$和$M_2$的长度相同，那么$\mathrm{Pad}\pth{M_1}$和$\mathrm{Pad}\pth{M_2}$的长度相同
+	\item 对于任意$M_1, M_2\in D$, 如果$M_1$和$M_2$的长度不同, 那么$\mathrm{Pad}\pth{M_1}$和$\mathrm{Pad}\pth{M_2}$的最后一个块不同
+\end{itemize}
 
+对于任意正整数$b$, 我们可以轻易地构造出服从MD结构的填充函数：对于长度为$k$的二进制串$M$, 如果$k\bmod b\neq b-1$, 那么将二进制串$k$后不停地填充$0$, 直到新串的长度模$b$为$b-1$. 然后，将最初串$M$的长度$k$的二进制表示的最后一位填充在最后，形成一个长度为$b$的整数倍的串。可以轻松地证明，这种填充方法，是服从MD结构的。\par
+在上述构造方法中，我们提到，在新串的末尾填充最初串的长度，这一方法被称为Merkle-Damg\aa rd强化。
 \subsubsection{单向压缩函数}
+所谓单向压缩函数，其类似于输入是固定长度的哈希函数。对于单向压缩函数$h$, 其接受两个参数，一个为长度为$b$的二进制串，一个为长度为$v$的二进制串，并输出一个长度为$b$的二进制串。这可以看成一个输入长度为$b+v$, 输出长度为$b$的哈希函数。类似于哈希函数，单向压缩函数也有碰撞抵抗等要求。
+\subsubsection{算法}
+要实现服从Merkle-Damg\aa rd结构的输出为$b$比特的哈希函数$H$，需要两个正整数$b, v$. 一个相对于$v$的使用了Merkle-Damg\aa rd强化的服从MD结构的填充函数$\mathrm{Pad}$, 一个接受参数为分别为长度为$b$和$v$的二进制串的单向压缩函数$h$, 以及一个长度为$b$的初始值$\mathrm{IV}$.\par
+那么，Merkle-Damg\aa rd结构的算法为：
+\begin{enumerate}
+	\item 将输入的二进制串$M$用$\mathrm{Pad}$函数填充为长度为$nb$比特的二进制串$M'=\mathrm{Pad}\pth{M}$
+	\item 将$M'$从头开始分割为$n$个长度为$b$比特的子串$M_1, M_2, \ldots, M_n$
+	\item 对于每个子串$M_i$, 计算$H_i=h\pth{M_i, H_{i-1}}$, 其中$H_0=\mathrm{IV}$
+	\item $H$的输出即为$M_n$
+\end{enumerate}
+
+同时，Merkle和Damg\aa rd分别独立证明出来，如果单向压缩函数$h$能抵抗碰撞，那么$H$也能抵抗碰撞。\par
+接下来，介绍两个基于Merkle-Damg\aa rd结构的哈希算法：MD5和SHA-1
+\subsection{MD5}
+MD5哈希算法的输出为128比特的二进制串，其$b=128, v=512$. 然而，MD5算法并不安全。在2012年，MD5算法被卡耐基梅隆大学软件工程研究所宣布能被密码学方法破解，不适合将来的使用。但是，如果只是简单的摘要对比，对安全性并不高的话，MD5哈希算法也是一个比较简便的方法。\par
+在MD5算法中，二进制串既要以比特串的形式进行异或等逻辑运算，也要以二进制数的形式进行加减等算术运算。因此，在MD5算法中涉及到了数据的存储问题。由于是在计算机上实现的，而计算机中一个数据单元是1字节，也就是8比特。因此，数据存储的问题变成了字节存储顺序的问题。比如说，以十六进制表示的二进制串$1234$究竟表示的是$1\times 16^3+2\times 16^2+3\times 16+4$还是$4\times 16^3+3\times 16^2+2\times 16+1$呢？前者被称为小端法，后者被称为大端法（但无论是小端法还是大端法，每个字节内部比特的存储顺序都是小端法）。而MD5算法中使用的是大端法。但是，现代计算机以及本算法使用的\verb`BigInteger`类均采用小端法处理二进制串。因此，在C++程序实现的时候，每次讲二进制串转化为数字，以及数字转化为二进制串时，都要调整端序。\par
+虽然事实上，端序并不会影响加密性，但是，作为一个通行的标准，MD5码仍然需要我们使用大端法。\par
+MD5算法包括了四个步骤：
+\begin{enumerate}
+	\item 填充比特
+	\item 填充长度
+	\item 初始化链接变量
+	\item 处理消息
+\end{enumerate}
+
+其中，填充比特和填充长度就是之前讲的Merkle-Damg\aa rd结构中的填充函数，而初始化链接变量是为了之后处理消息使用的参数，处理消息则是运用单向压缩函数，并进行输出。
+\subsubsection{填充比特}
+假设输入消息的长度为$k$, 那么如果$k\bmod{512}<448$, 那么将其后先填充一个'1', 再不停填充'0'直到新串的长度模$512$等于$448$. 如果$k\bmod{512}>448$, 那么先将其后填充一个'1', 然后再不停填充0，填满一个块以后，再继续填充$448$位。\par
+其C程序实现如下：
+\begin{prove}
+\begin{verbatim}
+BigInteger appendPaddingBits(BigInteger plainText)
+{
+    int spareLength = plainText.getLength() % 512;
+    if (spareLength < 448)
+    {
+        int appendLength = 448 - spareLength;
+        bool *appendValue = new bool[appendLength];
+        *(appendValue + appendLength - 1) = true;
+        int index = appendLength - 2;
+        while (index > -1)
+        {
+            *(appendValue + index) = false;
+            index--;
+        }
+        plainText.append(appendValue, appendLength);
+    }
+    else if (spareLength > 448)
+    {
+        int appendLength = 512 - spareLength + 448;
+        bool *appendValue = new bool[appendLength];
+        *(appendValue + appendLength - 1) = true;
+        int index = appendLength - 2;
+        while (index > -1)
+        {
+            *(appendValue + index) = false;
+            index--;
+        }
+        plainText.append(appendValue, appendLength);
+    }
+    return plainText;
+}
+\end{verbatim}
+\end{prove}
+\subsubsection{填充长度}
+记最初消息的长度为$k$. 将其表示成二进制串，如果其长度小于64位，则再其首部填0；如果其长度大于64位，则截取其最后64位。\par
+这里由于涉及到数向二进制串的转化，需要调整端序。\par
+其C程序实现如下：
+\begin{prove}
+\begin{verbatim}
+BigInteger appendLength(BigInteger appendedText, int textLength)
+{
+    BigInteger appendBigInt(textLength);
+    appendBigInt.limitTo(64);
+    BigInteger bitSlice[8];
+    for (int byte = 0; byte < 8; byte++)
+    {
+        bitSlice[byte] = appendBigInt.slice(8 * byte, 
+                                            8 * (byte + 1));
+        appendedText.append(bitSlice[byte]);
+    }
+    return appendedText;
+}
+\end{verbatim}
+\end{prove}
+\subsubsection{初始化链接变量}
+在MD5最初使用的大端法表示下，MD5使用的4个32位链接变量的值分别是：
+\begin{itemize}
+	\item \verb`A=0x01234567`
+	\item \verb`B=0x89abcdef`
+	\item \verb`C=0xfedcba98`
+	\item \verb`D=0x76543210`
+\end{itemize}
+
+但是，由于这也涉及到数向二进制串的转化，因此，需要调整端序。\par
+其C程序实现如下：
+\begin{prove}
+\begin{verbatim}
+BigInteger A, B, C, D;
+void initializeMDBuffer()
+{
+    A = BigInteger("0x67452301");
+    B = BigInteger("0xefcdab89");
+    C = BigInteger("0x98badcfe");
+    D = BigInteger("0x10325476");
+}
+\end{verbatim}
+\end{prove}
+\subsubsection{处理消息}
+在处理消息的过程中，需要使用四个辅助函数\verb`FF`, \verb`GG`, \verb`HH`, \verb`II`. 而这四个辅助函数又是由另外四个辅助函数\verb`F`, \verb`G`, \verb`H`, \verb`I`定义的。因此，我们首先定义八个函数：
+\begin{prove}
+\begin{verbatim}
+BigInteger F(BigInteger X, BigInteger Y, BigInteger Z)
+{
+    return (X & Y) | (~X & Z);
+}
+
+BigInteger G(BigInteger X, BigInteger Y, BigInteger Z)
+{
+    return (X & Z) | (Y & ~Z);
+}
+
+BigInteger H(BigInteger X, BigInteger Y, BigInteger Z)
+{
+    return (X ^ Y) ^ Z;
+}
+
+BigInteger I(BigInteger X, BigInteger Y, BigInteger Z)
+{
+    return Y ^ (X | ~Z);
+}
+
+BigInteger X[16];
+BigInteger T[64];
+
+void FF(BigInteger &A, BigInteger B, BigInteger C, BigInteger D, 
+        int k, int s, int i){
+    BigInteger tmp = A + F(B, C, D) + X[k] + T[i];
+    tmp.limitTo(32);
+    A = B + tmp.rotLeft(s);
+    A.limitTo(32);
+}
+
+void GG(BigInteger &A, BigInteger B, BigInteger C, BigInteger D, 
+        int k, int s, int i)
+{
+    BigInteger tmp = A + G(B, C, D) + X[k] + T[i];
+    tmp.limitTo(32);
+    A = B + tmp.rotLeft(s);
+    A.limitTo(32);
+}
+
+void HH(BigInteger &A, BigInteger B, BigInteger C, BigInteger D, 
+        int k, int s, int i)
+{
+    BigInteger tmp = A + H(B, C, D) + X[k] + T[i];
+    tmp.limitTo(32);
+    A = B + tmp.rotLeft(s);
+    A.limitTo(32);
+}
+
+void II(BigInteger &A, BigInteger B, BigInteger C, BigInteger D, 
+        int k, int s, int i)
+{
+    BigInteger tmp = A + I(B, C, D) + X[k] + T[i];
+    tmp.limitTo(32);
+    A = B + tmp.rotLeft(s);
+    A.limitTo(32);
+}
+\end{verbatim}
+\end{prove}

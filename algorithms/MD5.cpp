@@ -48,23 +48,12 @@ BigInteger appendLength(BigInteger appendedText, int textLength)
 {
     BigInteger appendBigInt(textLength);
     appendBigInt.limitTo(64);
-    BigInteger bitSlice[16] = {appendBigInt.slice(0, 8), appendBigInt.slice(8, 16), appendBigInt.slice(16, 24), appendBigInt.slice(24, 32), appendBigInt.slice(32, 40), appendBigInt.slice(40, 48), appendBigInt.slice(48, 56), appendBigInt.slice(56, 64)};
-    appendedText.append(bitSlice[0]);
-    appendedText.append(bitSlice[1]);
-    appendedText.append(bitSlice[2]);
-    appendedText.append(bitSlice[3]);
-    appendedText.append(bitSlice[4]);
-    appendedText.append(bitSlice[5]);
-    appendedText.append(bitSlice[6]);
-    appendedText.append(bitSlice[7]);
-    appendedText.append(bitSlice[8]);
-    appendedText.append(bitSlice[9]);
-    appendedText.append(bitSlice[10]);
-    appendedText.append(bitSlice[11]);
-    appendedText.append(bitSlice[12]);
-    appendedText.append(bitSlice[13]);
-    appendedText.append(bitSlice[14]);
-    appendedText.append(bitSlice[15]);
+    BigInteger bitSlice[8];
+    for (int byte = 0; byte < 8; byte++)
+    {
+        bitSlice[byte] = appendBigInt.slice(8 * byte, 8 * (byte + 1));
+        appendedText.append(bitSlice[byte]);
+    }
     return appendedText;
 }
 
@@ -100,7 +89,8 @@ BigInteger I(BigInteger X, BigInteger Y, BigInteger Z)
 BigInteger X[16];
 BigInteger T[64];
 
-void FF(BigInteger &A, BigInteger B, BigInteger C, BigInteger D, int k, int s, int i)
+void FF(BigInteger &A, BigInteger B, BigInteger C, BigInteger D, 
+        int k, int s, int i)
 {
     BigInteger tmp = A + F(B, C, D) + X[k] + T[i];
     tmp.limitTo(32);
