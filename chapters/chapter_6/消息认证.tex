@@ -86,7 +86,7 @@ MD5算法包括了四个步骤：
 \begin{enumerate}
 	\item 填充比特
 	\item 填充长度
-	\item 初始化链接变量
+	\item 初始化变量
 	\item 处理消息
 \end{enumerate}
 
@@ -150,7 +150,8 @@ BigInteger appendLength(BigInteger appendedText, int textLength)
 }
 \end{verbatim}
 \end{prove}
-\subsubsection{初始化链接变量}
+\subsubsection{初始化变量}
+MD5算法中，一共要初始化4个32位的链接变量，和64个辅助变量。\par
 在MD5最初使用的大端法表示下，MD5使用的4个32位链接变量的值分别是：
 \begin{itemize}
 	\item \verb`A=0x01234567`
@@ -161,16 +162,25 @@ BigInteger appendLength(BigInteger appendedText, int textLength)
 
 所谓链接变量，将其链接起来，就是一个长为128比特的二进制串。在Merkle-Damg\aa rd结构结构中，这个128比特的二进制串就是作为初始值$\mathrm{IV}$.\par
 由于这也涉及到数向二进制串的转化，因此，需要调整端序。\par
+\verb`T[64]`是一个辅助数组，\verb`T[i]`的值是$4294967296\abs{\sin\pth{i+1}}$.\par
 其C程序实现如下：
 \begin{prove}
 \begin{verbatim}
 BigInteger A, B, C, D;
-void initializeMDBuffer()
+void initializeBuffer()
 {
     A = BigInteger("0x67452301");
     B = BigInteger("0xefcdab89");
     C = BigInteger("0x98badcfe");
     D = BigInteger("0x10325476");
+
+
+    for (int i = 0; i < 64; i++)
+    {
+        T[i] = BigInteger((unsigned int)(4294967296 * 
+                                            fabs(sin(i + 1))));
+        T[i].limitTo(32);
+    }
 }
 \end{verbatim}
 \end{prove}
@@ -199,7 +209,6 @@ BigInteger I(BigInteger X, BigInteger Y, BigInteger Z)
 }
 
 BigInteger X[16];
-BigInteger T[64];
 
 void FF(BigInteger &A, BigInteger B, BigInteger C, BigInteger D, 
         int k, int s, int i){
@@ -238,7 +247,7 @@ void II(BigInteger &A, BigInteger B, BigInteger C, BigInteger D,
 \end{verbatim}
 \end{prove}
 
-在上述程序中，\verb`X[16]`是在下一环节中赋值的变量，每个元素为32比特长的二进制数。\verb`T[64]`是一个辅助数组，\verb`T[i]`的值是$4294967296\abs{\sin\pth{i+1}}$, 这一值也会在下一环节初始化。\par
+在上述程序中，\verb`X[16]`是在下一环节中赋值的变量，每个元素为32比特长的二进制数。\verb`T[64]`是一个上一环节初始化的辅助数组。\par
 下一环节则是正式处理消息。首先，根据Merkle-Damg\aa rd结构，需要将处理好的消息分为512比特的块，然后将一个块再分为16个长度为32比特的二进制串\verb`X[16]`。处理的过程中，由于用到了算术运算，因此，也要调整端序。处理的过程就是一个单向压缩函数，其算法就是反复调用之前的\verb`FF`, \verb`GG`, \verb`HH`, \verb`II`四个函数。\par
 最后，输出的时候，就是先调整端序，然后拼接并输出。\par
 其C程序实现如下：
@@ -246,12 +255,6 @@ void II(BigInteger &A, BigInteger B, BigInteger C, BigInteger D,
 \begin{verbatim}
 BigInteger processMessage(BigInteger message)
 {
-    for (int i = 0; i < 64; i++)
-    {
-        T[i] = BigInteger((unsigned int)(4294967296 * 
-                                            fabs(sin(i + 1))));
-        T[i].limitTo(32);
-    }
     int N = message.getLength() / 32;
     for (int i = 0; i < N / 16; i++)
     {
@@ -378,9 +381,251 @@ BigInteger processMessage(BigInteger message)
 BigInteger MD5_hash(BigInteger plainText)
 {
     BigInteger appendedText = appendPaddingBits(plainText);
-    initializeMDBuffer();
     BigInteger message = appendLength(appendedText, 
                                         plainText.getLength());
+    initializeBuffer();
+    return processMessage(message);
+}
+\end{verbatim}
+\end{prove}
+\subsection{SHA-256}
+自1993年开始，美国国家标准技术研究所陆续推出了4组哈希算法，称为安全哈希算法(Secure Hash Algorithm, SHA), 分别为SHA-0, SHA-1, SHA-2, SHA-3.\par
+SHA-1已经不再视为可抵御有充足资金、充足计算资源的攻击者。2005年，密码分析人员发现了对SHA-1的有效攻击方法，这表明该算法可能不够安全，不能继续使用，自2010年以来，许多组织建议用SHA-2或SHA-3来替换SHA-1。Microsoft、Google以及Mozilla都宣布，它们旗下的浏览器将在2017年前停止接受使用SHA-1算法签名的SSL证书。因此，这里主要介绍SHA-2中最常用的算法：SHA-256哈希算法。\par
+SHA-256也采用的是Merkle-Damg\aa rd结构，其中$b=256, v=512$. 也就是说，SHA-256产生的摘要长度为256比特。此外，与MD5不同的是，SHA-256采用的是大端法存储数据。因此，在实际实现的过程中无需调整端序。\par
+类似MD5, SHA-256包括四个步骤：
+\begin{enumerate}
+    \item 填充比特
+    \item 填充长度
+    \item 初始化变量
+    \item 处理消息
+\end{enumerate}
+\subsubsection{填充比特}
+SHA-256算法的填充比特步骤与MD5算法一模一样，这里不再赘述。
+\subsubsection{填充长度}
+SHA-256算法的填充长度步骤与MD5算法一模一样，但由于SHA-256采用的是大端法，故不需要调整端序。\par
+其C程序实现如下：
+\begin{prove}
+\begin{verbatim}
+BigInteger appendLength(BigInteger appendedText, int textLength)
+{
+    BigInteger appendBigInt(textLength);
+    appendBigInt.limitTo(64);
+    appendedText.append(appendBigInt);
+    return appendedText;
+}
+\end{verbatim}
+\end{prove}
+\subsubsection{初始化变量}
+SHA-256算法需要初始化的变量有64个32位辅助变量\verb`K[64]`和8个32位链接变量\verb`H[8]`. 将链接变量链接在一起的256位二进制串就是Merkle-Damg\aa rd结构的初始值$\mathrm{IV}$.\par
+其C程序实现如下：
+\begin{prove}
+\begin{verbatim}
+BigInteger K[64];
+BigInteger H[8];
+
+void initializeBuffer()
+{
+    K[0] = BigInteger("0x428a2f98");
+    K[1] = BigInteger("0x71374491");
+    K[2] = BigInteger("0xb5c0fbcf");
+    K[3] = BigInteger("0xe9b5dba5");
+    K[4] = BigInteger("0x3956c25b");
+    K[5] = BigInteger("0x59f111f1");
+    K[6] = BigInteger("0x923f82a4");
+    K[7] = BigInteger("0xab1c5ed5");
+    K[8] = BigInteger("0xd807aa98");
+    K[9] = BigInteger("0x12835b01");
+    K[10] = BigInteger("0x243185be");
+    K[11] = BigInteger("0x550c7dc3");
+    K[12] = BigInteger("0x72be5d74");
+    K[13] = BigInteger("0x80deb1fe");
+    K[14] = BigInteger("0x9bdc06a7");
+    K[15] = BigInteger("0xc19bf174");
+    K[16] = BigInteger("0xe49b69c1");
+    K[17] = BigInteger("0xefbe4786");
+    K[18] = BigInteger("0x0fc19dc6");
+    K[19] = BigInteger("0x240ca1cc");
+    K[20] = BigInteger("0x2de92c6f");
+    K[21] = BigInteger("0x4a7484aa");
+    K[22] = BigInteger("0x5cb0a9dc");
+    K[23] = BigInteger("0x76f988da");
+    K[24] = BigInteger("0x983e5152");
+    K[25] = BigInteger("0xa831c66d");
+    K[26] = BigInteger("0xb00327c8");
+    K[27] = BigInteger("0xbf597fc7");
+    K[28] = BigInteger("0xc6e00bf3");
+    K[29] = BigInteger("0xd5a79147");
+    K[30] = BigInteger("0x06ca6351");
+    K[31] = BigInteger("0x14292967");
+    K[32] = BigInteger("0x27b70a85");
+    K[33] = BigInteger("0x2e1b2138");
+    K[34] = BigInteger("0x4d2c6dfc");
+    K[35] = BigInteger("0x53380d13");
+    K[36] = BigInteger("0x650a7354");
+    K[37] = BigInteger("0x766a0abb");
+    K[38] = BigInteger("0x81c2c92e");
+    K[39] = BigInteger("0x92722c85");
+    K[40] = BigInteger("0xa2bfe8a1");
+    K[41] = BigInteger("0xa81a664b");
+    K[42] = BigInteger("0xc24b8b70");
+    K[43] = BigInteger("0xc76c51a3");
+    K[44] = BigInteger("0xd192e819");
+    K[45] = BigInteger("0xd6990624");
+    K[46] = BigInteger("0xf40e3585");
+    K[47] = BigInteger("0x106aa070");
+    K[48] = BigInteger("0x19a4c116");
+    K[49] = BigInteger("0x1e376c08");
+    K[50] = BigInteger("0x2748774c");
+    K[51] = BigInteger("0x34b0bcb5");
+    K[52] = BigInteger("0x391c0cb3");
+    K[53] = BigInteger("0x4ed8aa4a");
+    K[54] = BigInteger("0x5b9cca4f");
+    K[55] = BigInteger("0x682e6ff3");
+    K[56] = BigInteger("0x748f82ee");
+    K[57] = BigInteger("0x78a5636f");
+    K[58] = BigInteger("0x84c87814");
+    K[59] = BigInteger("0x8cc70208");
+    K[60] = BigInteger("0x90befffa");
+    K[61] = BigInteger("0xa4506ceb");
+    K[62] = BigInteger("0xbef9a3f7");
+    K[63] = BigInteger("0xc67178f2");
+    
+    H[0] = BigInteger("0x6a09e667");
+    H[1] = BigInteger("0xbb67ae85");
+    H[2] = BigInteger("0x3c6ef372");
+    H[3] = BigInteger("0xa54ff53a");
+    H[4] = BigInteger("0x510e527f");
+    H[5] = BigInteger("0x9b05688c");
+    H[6] = BigInteger("0x1f83d9ab");
+    H[7] = BigInteger("0x5be0cd19");
+}
+\end{verbatim}
+\end{prove}
+\subsubsection{处理消息}
+在处理消息的过程中，需要用到6个辅助函数\verb`CH`, \verb`MAJ`, \verb`BSIG0`, \verb`BSIG1`, \verb`SSIG0`, \verb`SSIG1`. 下面，先定义这6个辅助函数：
+\begin{prove}
+\begin{verbatim}
+BigInteger CH(BigInteger x, BigInteger y, BigInteger z)
+{
+    return (x & y) ^ (~x & z);
+}
+
+BigInteger MAJ(BigInteger x, BigInteger y, BigInteger z)
+{
+    return (x & y) ^ (x & z) ^ (y & z);
+}
+
+BigInteger BSIG0(BigInteger x)
+{
+    return x.rotRight(2) ^ x.rotRight(13) ^ x.rotRight(22);
+}
+
+BigInteger BSIG1(BigInteger x)
+{
+    return x.rotRight(6) ^ x.rotRight(11) ^ x.rotRight(25);
+}
+
+BigInteger SSIG0(BigInteger x)
+{
+    BigInteger shifted = x >> 3;
+    shifted.limitTo(32);
+    return x.rotRight(7) ^ x.rotRight(18) ^ shifted;
+}
+
+BigInteger SSIG1(BigInteger x)
+{
+    BigInteger shifted = x >> 10;
+    shifted.limitTo(32);
+    return x.rotRight(17) ^ x.rotRight(19) ^ shifted;
+}
+\end{verbatim}
+\end{prove}
+
+在处理消息的过程中，首先将消息分为512个比特的块，然后对每个块进行处理。先将每个块分为16个32比特的二进制串，再将其利用辅助函数混合，产生一共64个32比特的二进制串。然后对其交换、逻辑运算，最终产生输出。\par
+其C程序实现如下：
+\begin{prove}
+\begin{verbatim}
+BigInteger processMessage(BigInteger message)
+{
+    int N = message.getLength() / 512;
+    for (int i = 0; i < N; i++)
+    {
+        BigInteger Mi = message.slice(512 * i, 512 * (i + 1));
+        BigInteger W[64];
+        for (int t = 0; t < 16; t++)
+            W[t] = Mi.slice(32 * t, 32 * (t + 1));
+        for (int t = 16; t < 64; t++)
+        {
+            W[t] = SSIG1(W[t - 2]) + W[t - 7] + SSIG0(W[t - 15])
+                                                 + W[t - 16];
+            W[t].limitTo(32);
+        }
+        
+        BigInteger a = H[0];
+        BigInteger b = H[1];
+        BigInteger c = H[2];
+        BigInteger d = H[3];
+        BigInteger e = H[4];
+        BigInteger f = H[5];
+        BigInteger g = H[6];
+        BigInteger h = H[7];
+        
+        for (int t = 0; t < 64; t++)
+        {
+            BigInteger T1 = h + BSIG1(e) + CH(e, f, g) + K[t]
+                                                         + W[t];
+            BigInteger T2 = BSIG0(a) + MAJ(a, b, c);
+            h = g;
+            g = f;
+            f = e;
+            e = d + T1;
+            e.limitTo(32);
+            d = c;
+            c = b;
+            b = a;
+            a = T1 + T2;
+            a.limitTo(32);
+        }
+        
+        H[0] += a;
+        H[0].limitTo(32);
+        H[1] += b;
+        H[1].limitTo(32);
+        H[2] += c;
+        H[2].limitTo(32);
+        H[3] += d;
+        H[3].limitTo(32);
+        H[4] += e;
+        H[4].limitTo(32);
+        H[5] += f;
+        H[5].limitTo(32);
+        H[6] += g;
+        H[6].limitTo(32);
+        H[7] += h;
+        H[7].limitTo(32);
+    }
+    BigInteger output = H[0];
+    output.append(H[1]);
+    output.append(H[2]);
+    output.append(H[3]);
+    output.append(H[4]);
+    output.append(H[5]);
+    output.append(H[6]);
+    output.append(H[7]);
+    return output;
+}
+\end{verbatim}
+\end{prove}
+\subsubsection{总过程}
+基于上述函数，最终总的SHA-256哈希算法的过程为：
+\begin{prove}
+\begin{verbatim}
+BigInteger SHA_256_hash(BigInteger plainText)
+{
+    BigInteger appendedText = appendPaddingBits(plainText);
+    BigInteger message = appendLength(appendedText,
+                                         plainText.getLength());
+    initializeBuffer();
     return processMessage(message);
 }
 \end{verbatim}

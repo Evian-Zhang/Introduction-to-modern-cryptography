@@ -87,7 +87,7 @@ BigInteger SSIG1(BigInteger x)
 BigInteger K[64];
 BigInteger H[8];
 
-void initializeKH()
+void initializeBuffer()
 {
     K[0] = BigInteger("0x428a2f98");
     K[1] = BigInteger("0x71374491");
@@ -232,13 +232,18 @@ BigInteger processMessage(BigInteger message)
     return output;
 }
 
+BigInteger SHA_256_hash(BigInteger plainText)
+{
+    BigInteger appendedText = appendPaddingBits(plainText);
+    BigInteger message = appendLength(appendedText, plainText.getLength());
+    initializeBuffer();
+    return processMessage(message);
+}
+
 int main()
 {
     BigInteger plainText = BigInteger::bigIntegerFromASCIIString("southeastuniversitysoutheastuniversitysoutheastuniversIty");
-    BigInteger appendedText = appendPaddingBits(plainText);
-    BigInteger message = appendLength(appendedText, plainText.getLength());
-    initializeKH();
-    BigInteger hash = processMessage(message);
+    BigInteger hash = SHA_256_hash(message);
     cout << hash.hexString() << endl;
     return 0;
 }

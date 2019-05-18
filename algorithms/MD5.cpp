@@ -58,12 +58,20 @@ BigInteger appendLength(BigInteger appendedText, int textLength)
 }
 
 BigInteger A, B, C, D;
-void initializeMDBuffer()
+BigInteger T[64];
+void initializeBuffer()
 {
     A = BigInteger("0x67452301");
     B = BigInteger("0xefcdab89");
     C = BigInteger("0x98badcfe");
     D = BigInteger("0x10325476");
+
+
+    for (int i = 0; i < 64; i++)
+    {
+        T[i] = BigInteger((unsigned int)(4294967296 * fabs(sin(i + 1))));
+        T[i].limitTo(32);
+    }
 }
 
 BigInteger F(BigInteger X, BigInteger Y, BigInteger Z)
@@ -87,7 +95,6 @@ BigInteger I(BigInteger X, BigInteger Y, BigInteger Z)
 }
 
 BigInteger X[16];
-BigInteger T[64];
 
 void FF(BigInteger &A, BigInteger B, BigInteger C, BigInteger D, 
         int k, int s, int i)
@@ -124,11 +131,6 @@ void II(BigInteger &A, BigInteger B, BigInteger C, BigInteger D, int k, int s, i
 
 BigInteger processMessage(BigInteger message)
 {
-    for (int i = 0; i < 64; i++)
-    {
-        T[i] = BigInteger((unsigned int)(4294967296 * fabs(sin(i + 1))));
-        T[i].limitTo(32);
-    }
     int N = message.getLength() / 32;
     for (int i = 0; i < N / 16; i++)
     {
@@ -246,19 +248,16 @@ BigInteger processMessage(BigInteger message)
 BigInteger MD5_hash(BigInteger plainText)
 {
     BigInteger appendedText = appendPaddingBits(plainText);
-    initializeMDBuffer();
     BigInteger message = appendLength(appendedText, 
                                         plainText.getLength());
+    initializeBuffer();
     return processMessage(message);
 }
 
 int main()
 {
     BigInteger plainText = BigInteger::bigIntegerFromASCIIString("southeastuniversitysoutheastuniversitysoutheastuniversIty");
-    BigInteger appendedText = appendPaddingBits(plainText);
-    initializeMDBuffer();
-    BigInteger message = appendLength(appendedText, plainText.getLength());
-    BigInteger hash = processMessage(message);
+    BigInteger hash = MD5_hash(message);
     cout << hash.hexString() << endl;
     return 0;
 }
