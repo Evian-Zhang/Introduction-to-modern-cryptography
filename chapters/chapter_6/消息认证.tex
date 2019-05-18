@@ -159,7 +159,8 @@ BigInteger appendLength(BigInteger appendedText, int textLength)
 	\item \verb`D=0x76543210`
 \end{itemize}
 
-但是，由于这也涉及到数向二进制串的转化，因此，需要调整端序。\par
+所谓链接变量，将其链接起来，就是一个长为128比特的二进制串。在Merkle-Damg\aa rd结构结构中，这个128比特的二进制串就是作为初始值$\mathrm{IV}$.\par
+由于这也涉及到数向二进制串的转化，因此，需要调整端序。\par
 其C程序实现如下：
 \begin{prove}
 \begin{verbatim}
@@ -238,7 +239,7 @@ void II(BigInteger &A, BigInteger B, BigInteger C, BigInteger D,
 \end{prove}
 
 在上述程序中，\verb`X[16]`是在下一环节中赋值的变量，每个元素为32比特长的二进制数。\verb`T[64]`是一个辅助数组，\verb`T[i]`的值是$4294967296\abs{\sin\pth{i+1}}$, 这一值也会在下一环节初始化。\par
-下一环节则是正式处理消息。首先，根据Merkle-Damg\aa rd结构，需要将处理好的消息分为128比特的块，然后对每个块进行处理。处理的过程中，由于用到了算术运算，因此，也要调整端序。处理的过程就是一个单向压缩函数，其算法就是反复调用之前的\verb`FF`, \verb`GG`, \verb`HH`, \verb`II`四个函数。\par
+下一环节则是正式处理消息。首先，根据Merkle-Damg\aa rd结构，需要将处理好的消息分为512比特的块，然后将一个块再分为16个长度为32比特的二进制串\verb`X[16]`。处理的过程中，由于用到了算术运算，因此，也要调整端序。处理的过程就是一个单向压缩函数，其算法就是反复调用之前的\verb`FF`, \verb`GG`, \verb`HH`, \verb`II`四个函数。\par
 最后，输出的时候，就是先调整端序，然后拼接并输出。\par
 其C程序实现如下：
 \begin{prove}
@@ -367,6 +368,20 @@ BigInteger processMessage(BigInteger message)
     output.append(D.slice(8, 16));
     output.append(D.slice(0, 8));
     return output;
+}
+\end{verbatim}
+\end{prove}
+\subsubsection{总过程}
+基于上述函数，最终总的MD5哈希算法的过程为：
+\begin{prove}
+\begin{verbatim}
+BigInteger MD5_hash(BigInteger plainText)
+{
+    BigInteger appendedText = appendPaddingBits(plainText);
+    initializeMDBuffer();
+    BigInteger message = appendLength(appendedText, 
+                                        plainText.getLength());
+    return processMessage(message);
 }
 \end{verbatim}
 \end{prove}

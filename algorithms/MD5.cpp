@@ -243,6 +243,15 @@ BigInteger processMessage(BigInteger message)
     return output;
 }
 
+BigInteger MD5_hash(BigInteger plainText)
+{
+    BigInteger appendedText = appendPaddingBits(plainText);
+    initializeMDBuffer();
+    BigInteger message = appendLength(appendedText, 
+                                        plainText.getLength());
+    return processMessage(message);
+}
+
 int main()
 {
     BigInteger plainText = BigInteger::bigIntegerFromASCIIString("southeastuniversitysoutheastuniversitysoutheastuniversIty");
