@@ -11,6 +11,12 @@
 \setsansfont{Verdana}
 \setmonofont{Menlo-Regular}
 
+\newfontfamily{\FAB}{Font Awesome 5 Brands Regular}
+\setCJKfamilyfont{FZFS}{FZFENSTXJW--GB1-0}
+\newfontfamily{\FAFR}{Font Awesome 5 Free Regular}
+\def\faGithub{{\FAB \symbol{"F09B}}} % Github
+\def\faEmail{{\FAFR \symbol{"F0E0}}} % E-Mail
+
 \usepackage{float}
 
 \usepackage{geometry}
@@ -78,12 +84,26 @@
 \usepackage[framemethod=tikz]{mdframed}
 \newenvironment{prove}{\begin{mdframed}[backgroundcolor=gray!10,roundcorner=8pt]}{\end{mdframed}}
 
+\title{现代密码学简介}
+\author{张曙}
+\date{\today}
+
+\usepackage[absolute]{textpos}
+
 \usepackage[unicode]{hyperref}
 \hypersetup{pdfauthor={张曙},
 pdftitle={现代密码学简介},
 hidelinks
 }
 \begin{document}
+\begin{titlepage}
+\vspace*{9em}{\centering\Huge\CJKfamily{FZFS} 现代密码学简介\par}
+\vspace{5em}{\centering\Large \textbf{张曙}\par}
+\vspace{3em}{\centering\faGithub\quad\texttt{\href{https://github.com/Evian-Zhang}{https://github.com/Evian-Zhang}}\par\centering\faEmail\quad\texttt{\href{mailto:evianzhang1999@gmail.com}{evianzhang1999@gmail.com}}\par}
+\begin{textblock}{10}[0,0](3,14)
+在GitHub上查看本项目：\faGithub\quad\texttt{\href{https://github.com/Evian-Zhang/Introduction-to-modern-cryptography}{Evian-Zhang/Introduction-to-modern-cryptography}}
+\end{textblock}
+\end{titlepage}
 \tableofcontents
 \thispagestyle{fancy}
 \input{chapters/chapter_1/绪论}
