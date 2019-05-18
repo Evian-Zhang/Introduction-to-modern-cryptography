@@ -649,7 +649,7 @@ BigInteger BigInteger::slice(int start, int end) const
     bool sign = this->sign;
     bool *value = new bool[length];
     for (int digit = 0; digit < length; digit++)
-        value[digit] = this->value[start + digit];
+        value[digit] = this->value[this->length - end + digit];
     
     return BigInteger(length, value, sign);
 }

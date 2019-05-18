@@ -169,10 +169,10 @@ BigInteger processMessage(BigInteger message)
     int N = message.getLength() / 512;
     for (int i = 0; i < N; i++)
     {
-        BigInteger Mi = message.slice(512 * (N - i - 1), 512 * (N - i));
+        BigInteger Mi = message.slice(512 * i, 512 * (i + 1));
         BigInteger W[64];
         for (int t = 0; t < 16; t++)
-            W[t] = Mi.slice(32 * (15 - t), 32 * (16 - t));
+            W[t] = Mi.slice(32 * t, 32 * (t + 1));
         for (int t = 16; t < 64; t++)
         {
             W[t] = SSIG1(W[t - 2]) + W[t - 7] + SSIG0(W[t - 15]) + W[t - 16];

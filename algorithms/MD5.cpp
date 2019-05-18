@@ -52,7 +52,7 @@ BigInteger appendLength(BigInteger appendedText, int textLength)
     for (int byte = 0; byte < 8; byte++)
     {
         bitSlice[byte] = appendBigInt.slice(8 * byte, 8 * (byte + 1));
-        appendedText.append(bitSlice[byte]);
+        appendedText.append(bitSlice[7 - byte]);
     }
     return appendedText;
 }
@@ -134,12 +134,12 @@ BigInteger processMessage(BigInteger message)
     {
         for (int j = 0; j < 16; j++)
         {
-            X[j] = message.slice(32 * (N - i * 16 - j - 1), 32 * (N - i * 16 - j));
+            X[j] = message.slice(32 * (i * 16 + j), 32 * (i * 16 + j + 1));
             BigInteger bitSlice[4] = {X[j].slice(0, 8), X[j].slice(8, 16), X[j].slice(16, 24), X[j].slice(24, 32)};
-            X[j] = bitSlice[0];
-            X[j].append(bitSlice[1]);
+            X[j] = bitSlice[3];
             X[j].append(bitSlice[2]);
-            X[j].append(bitSlice[3]);
+            X[j].append(bitSlice[1]);
+            X[j].append(bitSlice[0]);
         }
         
         BigInteger AA = A, BB = B, CC = C, DD = D;
@@ -224,22 +224,22 @@ BigInteger processMessage(BigInteger message)
         D.limitTo(32);
     }
     
-    BigInteger output = A.slice(0, 8);
-    output.append(A.slice(8, 16));
+    BigInteger output = A.slice(24, 32);
     output.append(A.slice(16, 24));
-    output.append(A.slice(24, 32));
-    output.append(B.slice(0, 8));
-    output.append(B.slice(8, 16));
-    output.append(B.slice(16, 24));
+    output.append(A.slice(8, 16));
+    output.append(A.slice(0, 8));
     output.append(B.slice(24, 32));
-    output.append(C.slice(0, 8));
-    output.append(C.slice(8, 16));
-    output.append(C.slice(16, 24));
+    output.append(B.slice(16, 24));
+    output.append(B.slice(8, 16));
+    output.append(B.slice(0, 8));
     output.append(C.slice(24, 32));
-    output.append(D.slice(0, 8));
-    output.append(D.slice(8, 16));
-    output.append(D.slice(16, 24));
+    output.append(C.slice(16, 24));
+    output.append(C.slice(8, 16));
+    output.append(C.slice(0, 8));
     output.append(D.slice(24, 32));
+    output.append(D.slice(16, 24));
+    output.append(D.slice(8, 16));
+    output.append(D.slice(0, 8));
     return output;
 }
 
