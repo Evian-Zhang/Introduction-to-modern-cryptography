@@ -657,6 +657,14 @@ BigInteger BigInteger::slice(int start, int end) const
 void BigInteger::limitTo(int length)
 {
     bool *value = new bool[length];
+    if (!this->length)
+    {
+        for (int digit = 0; digit < length; digit++)
+            value[digit] = false;
+        this->length = length;
+        this->value = value;
+        return;
+    }
     if (this->length <= length)
     {
         for (int digit = 0; digit < this->length; digit++)
@@ -812,7 +820,12 @@ char *BigInteger::ASCIIString() const
 char *BigInteger::hexString() const
 {
     if (!this->length)
-        return NULL;
+    {
+        char *a = new char[2];
+        a[0] = '0';
+        a[1] = '\0';
+        return a;
+    }
     char hex[16] = {'0', '1', '2', '3', '4', '5', '6', '7', '8', '9', 'a', 'b', 'c', 'd', 'e', 'f'};
     char *str = new char[this->length / 4 + 1];
     for (int index = 0; index < this->length / 4; index++)
@@ -838,7 +851,12 @@ char *BigInteger::hexString() const
 char *BigInteger::decString() const
 {
     if (!this->arithmeticLength)
-        return NULL;
+    {
+        char *a = new char[2];
+        a[0] = '0';
+        a[1] = '\0';
+        return a;
+    }
     char dec[10] = {'0', '1', '2', '3', '4', '5', '6', '7', '8', '9'};
     char *str = new char[(int)(this->arithmeticLength * log(2) / log(10))];
     int length = 0;
