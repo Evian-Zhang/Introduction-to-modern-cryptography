@@ -35,3 +35,10 @@
 本章介绍了安全协议，以及对称密码、非对称密码的密钥分配、密钥管理方法。
 
 本章的 tex 源码可在[Evian-Zhang/Introduction-to-modern-cryptography/chapters/chapter_5](https://github.com/Evian-Zhang/Introduction-to-modern-cryptography/tree/master/chapters/chapter_5/)中找到。
+
+### 第六章 哈希算法
+
+本章介绍了哈希算法的 Merkle-Damgård 结构，以及MD5和SHA-256哈希算法。
+
+本章的 tex 源码可在[Evian-Zhang/Introduction-to-modern-cryptography/chapters/chapter_6](https://github.com/Evian-Zhang/Introduction-to-modern-cryptography/tree/master/chapters/chapter_6/)中找到。
+
