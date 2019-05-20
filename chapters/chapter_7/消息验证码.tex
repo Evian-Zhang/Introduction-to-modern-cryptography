@@ -16,4 +16,56 @@
 
 我们可以看到，MAC算法的设计准则和哈希算法的设计准则几乎一致，只是MAC算法还需要一个密钥。此外，MAC算法的输出称为\textbf{标签}(tag).\par
 发送方通过密钥$K$, 使用MAC算法对要传递的消息$m$进行处理，得到标签$t$, 将$\pth{m, t}$发送给接收者。接收方接收到$\pth{m', t}$后，通过与发送方共享的密钥$K$, 使用同样的MAC算法对接收到的消息$m'$进行处理，得到标签$t'$. 如果$t'=t$, 那么既说明了发送方发送的消息并没有得到篡改，也说明了发送方与自己使用的是同一个密钥，也就是消息的发送方是期待的发送方。\par
-这就是MAC算法的基本思想。
+上述过程虽然并不是真的符合认证加密的过程，但是讲述了MAC的基本思想。\par
+MAC最主要的两个部分，一个是密钥，一个是类似哈希函数的基本概念。因此，MAC主要的实现方法，也分为两类：基于分组密码，与基于哈希函数。
+\section{基于分组密码的MAC算法}
+\subsection{CBC-MAC}
+我们之前在分组密码中提到，分组密码有许多运行模式。CBC-MAC就是基于密码分组连接模式(CBC)的MAC算法。其也被称为数据认证算法(Data Authentication Algorithm). 但是由于其安全性欠佳，因此已被淘汰。\par
+假设要传递的消息为$M$, 密钥为$K$, 分组密码加密算法为$\E{k}{m}$, 其分组长度为$b$比特。\par
+CBC-MAC的过程如下：
+\begin{enumerate}
+	\item 填充\par
+	将消息$M$通过在末尾补`0'填充为长度是$b$的整数倍$nb$的二进制串$M'$, 并将其分为$n$个长度为$b$比特的二进制串$m_1, m_2, \ldots, m_n$.
+	\item 加密\par
+	采用以下公式进行加密：
+	\begin{align*}
+	&O_1=\E{K}{m_1}\\
+	&O_{i}=\E{K}{O_{i-1}\oplus m_{i}},\quad i=2, 3,\ldots, n
+	\end{align*}
+	\item 输出\par
+	CBC-MAC的输出为$b$比特二进制串$O_n$
+\end{enumerate}
+
+从本质上来说，这个算法就是一个初始值$\mathrm{IV}=0$的CBC模式分组加密算法，取其最后一个分组的输出。\par
+对于固定长度的消息来说，如果使用的分组加密算法是安全的，那么CBC-MAC也是安全的。但是，对于长度不固定的消息来说，这是不安全的。
+\subsection{CMAC}
+CMAC是NSIT推荐的基于分组加密算法的MAC算法。\par
+假设要传递的消息为$M$, 密钥为$K$, 分组密码加密算法为$\E{k}{m}$, 其分组长度为$b$比特。\par
+CMAC分为两个步骤：生成子密钥与输出标签。
+\subsubsection{生成子密钥}
+对于密钥$K$, 采用下面的算法将其生成为两个长度为$b$比特的子密钥$K_1, K_2$
+\begin{enumerate}
+	\item 计算$b$位二进制数$K_0=\E{K}{0}$
+	\item 记$B_0$为$K_0$表示成二进制数时的最高位（第$b$位）。\par
+	如果$B_0=0$, 则$K_1=K_0\ll 1$, 其中$x\ll 1$表示将二进制串$x$左移一个比特；\par
+	如果$B_0=1$, 则$K_1=\pth{K_0\ll 1}\oplus C$, 其中
+	\[C=\begin{dcases}\pth{1B}_{16}&b=64\\\pth{87}_{16}&b=128\\\pth{425}_{16}&b=256\end{dcases}\]
+	\item 记$B_1$为$K_1$表示成二进制数时的最高位。\par
+	如果$B_1=0$, 则$K_2=K_1\ll 1$.\par
+	如果$B_1=1$, 则$K_2=\pth{K_1\ll 1}\oplus C$
+\end{enumerate}
+\subsubsection{输出标签}
+CMAC采用如下算法产生$b$比特的标签：
+\begin{enumerate}
+	\item 将$M$从头开始分为$n$个子串$m_1, m_2, \ldots, m_n$. 其中$m_1, m_2,\ldots, m_{n-1}$的长度均为$b$比特，$m_n$的长度不大于$b$比特。
+	\item 如果$m_n$的长度是$b$比特，那么$m_n'=K_1\oplus m_n$.\par
+	如果$m_n$的长度小于$b$比特，那么先在其后补一位`1', 然后一直补`0'直到其长度达到$b$比特的二进制串$m_n''$, 然后$m_n'=K_2\oplus m_n''$.
+	\item 采用如下公式加密：
+	\begin{align*}
+	&O_1=\E{K}{m_1}\\
+	&O_{i}=\E{K}{O_{i-1}\oplus m_{i}},\quad i=2, 3,\ldots, n\\
+	&O_n=\E{K}{O_{n-1}\oplus m_n'}
+	\end{align*}
+	\item 输出\par
+	CMAC的输出为$b$比特二进制串$O_n$
+\end{enumerate}
