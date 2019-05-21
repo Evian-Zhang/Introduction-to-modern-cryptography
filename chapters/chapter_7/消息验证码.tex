@@ -69,3 +69,40 @@ CMAC采用如下算法产生$b$比特的标签：
 	\item 输出\par
 	CMAC的输出为$b$比特二进制串$O_n$
 \end{enumerate}
+\section{基于哈希函数的MAC算法}
+除了基于分组密码的MAC算法，还有一种是基于哈希函数的MAC算法，称为HMAC.\par
+HMAC需要一个哈希函数$H(x)$, 根据我们上一章的记号，假设其输出为$b$比特，输入被处理为$v$比特的块。同时，HMAC还需要一个密钥$K$. 对$K$的长度有如下要求：
+\begin{itemize}
+\item $K$的长度不建议小于$b$比特。
+\item $K$的长度如果大于$v$比特，那么就对$K$进行哈希得到$b$比特长的串$H\pth{K}$作为实际使用的密钥$K$
+\end{itemize}
+
+通过上述操作，密钥$K$的长度被控制在不大于$v$比特。接着，在二进制串$K$的尾部填充`0'使得其长度达到$v$比特的新串$K'$.\par
+接下来需要定义两个串$\mathrm{ipad}$和$\mathrm{opad}$:
+\begin{itemize}
+	\item $\mathrm{ipad}$是将十六进制串$36$重复多次得到的长度为$v$的二进制串
+	\item $\mathrm{opad}$是将十六进制串$5C$重复多次得到的长度为$v$的二进制串
+\end{itemize}
+
+那么，HMAC算法的输出$C_K(m)$的定义为
+\begin{equation}
+	C_K(m)=H\pth{K'\oplus\mathrm{opad}\parallel H\pth{K'\oplus\mathrm{ipad}\parallel m}}
+\end{equation}
+其中$x\parallel y$代表将二进制串$y$级联在$x$尾部。
+\section{认证加密}
+通过MAC, 我们可以实现确定消息的完整性，和确定消息源头的真实性。但是，MAC做不到的却是提供保密性。因此，在实际的安全通信过程中，需要我们同时确保保密性、完整性与真实性。因此，在实际应用中，往往使用的是加密算法与MAC算法结合的方式。这种方式，称为认证加密(Authenticated encryption).\par
+常见的认证加密方式有三种：先加密再MAC、加密同时MAC、先MAC再加密。\par
+接下来假定由$A$向$B$发送消息$M$, 使用的加密算法为$\E{K}{m}$, MAC算法为$C_K(m)$. 加密密钥为$K_1$, MAC密钥为$K_2$. 加密密钥和MAC密钥不一定不同，这基于不同的认证加密模式。
+\subsection{先加密再MAC}
+先加密再MAC(Encrypt-then-MAC, EtM), 指的是先对明文加密，然后根据得到的密文生成MAC, 密文和他的MAC一起发送。即：
+\[A\to B: \E{K_1}{M}, C_{K_2}\pth{\E{K_1}{m}}\]
+
+这一方法是现在最常用的方法。
+\subsection{加密同时MAC}
+加密同时MAC(Encrypt-and-MAC, E\&M), 指的是基于明文生成MAC, 并且明文在没有MAC的情况下被加密。明文的MAC和密文一起发送。即：
+\[A\to B:\E{K_1}{M}, C_{K_2}\pth{M}\]
+\subsection{先MAC再加密}
+先MAC再加密(MAC-then-Encrypt, MtE), 指的是基于明文生成MAC, 然后将明文和MAC一起加密以基于两者生成密文，密文被发送。即：
+\[A\to B:\E{K_1}{M\parallel C_{K_2}\pth{M}}\]
+\subsection{认证加密模式}
+由于E\&M, MtE均有安全上的隐患，所以现在最常用的认证加密方法就是EtM. 但是，EtM只是规定了认证加密的方式，对具体的加密算法和MAC算法并没有规定。因此，许多具体规定了加密算法与MAC算法的认证加密模式就出现了，如OCB, CCM, EAX, GCM等。其中GCM认证加密模式是现在最常用的认证加密模式。
