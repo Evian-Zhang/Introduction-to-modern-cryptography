@@ -738,9 +738,27 @@ BigInteger &BigInteger::operator/=(const BigInteger &bigInt)
     return *this;
 }
 
+BigInteger &BigInteger::operator&=(const BigInteger &bigInt)
+{
+    *this = *this & bigInt;
+    return *this;
+}
+
+BigInteger &BigInteger::operator|=(const BigInteger &bigInt)
+{
+    *this = *this | bigInt;
+    return *this;
+}
+
+BigInteger &BigInteger::operator^=(const BigInteger &bigInt)
+{
+    *this = *this ^ bigInt;
+    return *this;
+}
+
 BigInteger BigInteger::getRand()
 {
-    int length = 10000;
+    int length = 16;
     bool *value = new bool[length];
     for (int digit = 0; digit < length; digit++)
         value[digit] = rand() % 2;
@@ -768,6 +786,33 @@ BigInteger BigInteger::bigIntegerFromASCIIString(char *string)
             ch /= 2;
         }
     }
+    return BigInteger(length, value, true);
+}
+
+BigInteger BigInteger::bigIntegerFromHexString(char *string)
+{
+    char hex[16] = {'0', '1', '2', '3', '4', '5', '6', '7', '8', '9', 'a', 'b', 'c', 'd', 'e', 'f'};
+    bool first[16] = {0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1};
+    bool second[16] = {0, 0, 1, 1, 0, 0, 1, 1, 0, 0, 1, 1, 0 ,0, 1, 1};
+    bool third[16] = {0, 0, 0, 0, 1, 1, 1, 1, 0, 0, 0, 0, 1, 1, 1, 1};
+    bool fourth[16] = {0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 1, 1, 1, 1};
+    
+    int strLen = 0;
+    while (*(string + strLen) != '\0')
+        strLen++;
+    int length = strLen * 4;
+    bool *value = new bool[length];
+    for (int ch = strLen - 1; ch >= 0; ch--)
+        for (int index = 0; index < 16; index++)
+            if (string[ch] == hex[index])
+            {
+                value[4 * (strLen - ch - 1)] = first[index];
+                value[4 * (strLen - ch - 1) + 1] = second[index];
+                value[4 * (strLen - ch - 1) + 2] = third[index];
+                value[4 * (strLen - ch - 1) + 3] = fourth[index];
+                break;
+            }
+    
     return BigInteger(length, value, true);
 }
 
@@ -940,7 +985,7 @@ BigInteger BigInteger::extendGcd(BigInteger x, BigInteger y, BigInteger &a, BigI
     BigInteger tmp = a;
     a = b;
     b = tmp - x / y * b;
-    return r;
+    return (r % y + y) % y;
 }
 
 BigInteger BigInteger::inverse(const BigInteger a, const BigInteger mod)

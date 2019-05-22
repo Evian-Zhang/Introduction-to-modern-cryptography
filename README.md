@@ -42,3 +42,8 @@
 
 本章的 tex 源码可在[Evian-Zhang/Introduction-to-modern-cryptography/chapters/chapter_6](https://github.com/Evian-Zhang/Introduction-to-modern-cryptography/tree/master/chapters/chapter_6/)中找到。
 
+### 消息认证码
+
+本章介绍了消息认证码的三种类型，以及Poly1305算法的细节，同时也介绍了认证加密的过程。
+
+本章的 tex 源码可在[Evian-Zhang/Introduction-to-modern-cryptography/chapters/chapter_7](https://github.com/Evian-Zhang/Introduction-to-modern-cryptography/tree/master/chapters/chapter_7/)中找到。

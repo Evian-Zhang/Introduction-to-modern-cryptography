@@ -89,6 +89,137 @@ HMAC需要一个哈希函数$H(x)$, 根据我们上一章的记号，假设其�
 	C_K(m)=H\pth{K'\oplus\mathrm{opad}\parallel H\pth{K'\oplus\mathrm{ipad}\parallel m}}
 \end{equation}
 其中$x\parallel y$代表将二进制串$y$级联在$x$尾部。
+\section{基于全域哈希的MAC算法}
+基于全域哈希(Universal hashing)的MAC算法，简称为UMAC. 它的特点是，对于每一次求MAC的消息，其采用的哈希函数是不同的。也就是对于同一个消息，多次求MAC的结果并不相同。现在最常用的UMAC算法，就是Poly1305, 其也被称为目前处于顶尖水平的MAC算法。这种算法运算速度极快，安全性也较高。下面就介绍一下该算法。
+\subsection{Poly1305}
+该算法接收任意长度的消息$M$，一个256比特的密钥$K$, 输出为128比特的标签。该算法要求使用的密钥每一次都不同，因此，属于全域哈希。\par
+该算法涉及到二进制串与二进制数的转化，因此，需要涉及端序的问题。而该算法属于小端法，因此需要调整端序。\par
+该算法分为如下几个步骤：
+\begin{enumerate}
+	\item 处理密钥
+	\item 设置常数
+	\item 更新累加器
+	\item 输出
+\end{enumerate}
+\subsubsection{处理密钥}
+对于输入的256位密钥$K$, 将其分为左右两个128比特的串$r$和$s$(这里要求$r$和$s$都需要调整端序). 然后对于$r$, 需要对其进行过滤(clamp). 要求其调整端序后，从右往左数：
+\begin{itemize}
+	\item 第$4, 8, 12, 16$个字节的高4位变为0
+	\item 第$5, 9, 13$个字节的最低2位变为0
+\end{itemize}
+
+其C程序实现如下：
+\begin{prove}
+	\begin{verbatim}
+void clampR(BigInteger &r)
+{
+    r &= BigInteger::bigIntegerFromHexString("0ffffffc0ffffffc
+                                              0ffffffc0fffffff");
+}
+
+BigInteger r = key.slice(0, 128);
+changeEndian(r);
+clampR(r);
+BigInteger s = key.slice(128, 256);
+changeEndian(s);
+	\end{verbatim}
+\end{prove}
+\subsubsection{设置常数}
+在该算法中，涉及到常数$p=2^{130}-5$. 同时，将累加器\verb`accumulator`置为0.\par
+其C程序实现如下：
+\begin{prove}
+	\begin{verbatim}
+BigInteger accumulator = 0;
+BigInteger p = (BigInteger(1) << 130) - 5;
+	\end{verbatim}
+\end{prove}
+\subsubsection{更新累加器}
+将消息$M$从左向右分为16字节，也就是128比特的块（最后一部分可以小于128比特）。然后对于每个块，进行如下操作以更新累加器：
+\begin{enumerate}
+	\item 将该块以小端法转化为二进制数$m$
+	\item 在二进制数$m$的最高位前面加`00000001', 也就是说，如果$m$的十六进制表示为\\$\pth{22222222222222222222222222222222}_{16}$, 那么加了之后的十六进制表示为\\$\pth{0122222222222222222222222222222222}_{16}$
+	\item 如果该块的长度仍然小于17字节（即对于最后一个块来说），那么只需要在其高位填充0，使其达到17字节即可
+	\item 将最终得到的二进制数$m$加到\verb`accumulator`上
+	\item 将\verb`accumulator`乘$r$后再模$p$
+\end{enumerate}
+
+其C程序实现如下：
+\begin{prove}
+	\begin{verbatim}
+void processBlock(BigInteger &block)
+{
+    const int N = block.getLength() / 8;
+    changeEndian(block);
+    BigInteger addByte = BigInteger(1) << block.getLength();
+    block += addByte;
+    if (block.getLength() < 136)
+    {
+        block.limitTo(136);
+    }
+}
+
+int length = plainText.getLength();
+int N = length / 128;
+if (length % 128 != 0)
+	N++;
+for (int i = 0; i < N; i++)
+{
+	int upper = (i + 1) * 128;
+	if (upper > length)
+		upper = length;
+	BigInteger block = plainText.slice(i * 128, upper);
+	processBlock(block);
+	accumulator += block;
+	accumulator = (r * accumulator) % p;
+}
+accumulator += s;
+	\end{verbatim}
+\end{prove}
+\subsubsection{输出}
+将\verb`accumulator`转化成二进制串，也就是小端法调整端序后，输出其最低的128位即可。\par
+其C程序实现如下：
+\begin{prove}
+	\begin{verbatim}
+BigInteger tag = accumulator;
+tag.limitTo(128);
+changeEndian(tag);
+	\end{verbatim}
+\end{prove}
+\subsubsection{总过程}
+综上，Poly1305的总过程的C程序实现如下：
+\begin{prove}
+	\begin{verbatim}
+BigInteger Poly1305_MAC(BigInteger plainText, BigInteger key)
+{
+    BigInteger r = key.slice(0, 128);
+    changeEndian(r);
+    clampR(r);
+    BigInteger s = key.slice(128, 256);
+    changeEndian(s);
+    BigInteger accumulator = 0;
+    BigInteger p = (BigInteger(1) << 130) - 5;
+    int length = plainText.getLength();
+    int N = length / 128;
+    if (length % 128 != 0)
+        N++;
+    for (int i = 0; i < N; i++)
+    {
+        int upper = (i + 1) * 128;
+        if (upper > length)
+            upper = length;
+        BigInteger block = plainText.slice(i * 128, upper);
+        processBlock(block);
+        accumulator += block;
+        accumulator = (r * accumulator) % p;
+    }
+    accumulator += s;
+    BigInteger tag = accumulator;
+    tag.limitTo(128);
+    changeEndian(tag);
+    return tag;
+}
+	\end{verbatim}
+\end{prove}
 \section{认证加密}
 通过MAC, 我们可以实现确定消息的完整性，和确定消息源头的真实性。但是，MAC做不到的却是提供保密性。因此，在实际的安全通信过程中，需要我们同时确保保密性、完整性与真实性。因此，在实际应用中，往往使用的是加密算法与MAC算法结合的方式。这种方式，称为认证加密(Authenticated encryption).\par
 常见的认证加密方式有三种：先加密再MAC、加密同时MAC、先MAC再加密。\par

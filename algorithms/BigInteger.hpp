@@ -69,12 +69,16 @@ public:
     BigInteger &operator-=(const BigInteger &bigInt);
     BigInteger &operator*=(const BigInteger &bigInt);
     BigInteger &operator/=(const BigInteger &bigInt);
+    BigInteger &operator&=(const BigInteger &bigInt);
+    BigInteger &operator|=(const BigInteger &bigInt);
+    BigInteger &operator^=(const BigInteger &bigInt);
     
     static BigInteger getRand();
     
     static BigInteger getRandBit(int length);
     
     static BigInteger bigIntegerFromASCIIString(char *string);
+    static BigInteger bigIntegerFromHexString(char *string);
     
     int to_int() const;
     char *ASCIIString() const;
