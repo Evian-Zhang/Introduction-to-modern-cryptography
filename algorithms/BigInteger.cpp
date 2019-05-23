@@ -260,7 +260,7 @@ bool BigInteger::operator<(const BigInteger &bigInt) const
 
 bool BigInteger::operator>(const BigInteger &bigInt) const
 {
-    return !(bigInt <= *this);
+    return !(*this <= bigInt);
 }
 
 bool BigInteger::operator==(const BigInteger &bigInt) const
