@@ -13,17 +13,94 @@
     \end{tabular}
 \end{table}
 
-数字签名需要第三方来进行验证。那么，我们之前了解到的工具中有什么东西是第三方知道的呢？我们最先想到的就是公钥密码体系中发送者的公钥。由于涉及到了密钥，因此，数字签名总共有三个部分：
+数字签名需要第三方来进行验证。那么，我们之前了解到的工具中有什么东西是第三方知道的呢？我们最先想到的就是公钥密码体系中发送者的公钥。此外，也有一些单独设计的数字签名算法。由于涉及到了密钥，因此，数字签名总共有三个部分：
 \begin{itemize}
-    \item 密钥生成算法
-    \item 签名算法
-    \item 验证签名算法
+    \item 密钥生成算法Gen\par
+    返回用于签名的密钥（使用公钥密码时返回公-私钥对$\pth{PK, SK}$）
+    \item 签名算法$\mathrm{Sig}\pth{M, SK}$\par
+    返回签名$S$
+    \item 验证签名算法$\mathrm{Ver}\pth{S, PK}$\par
+    返回是否验证成功
 \end{itemize}
-\section{数字签名的基本步骤}
-下面假设发送者是$A$, 接收者是$B$, 第三方是$C$, 要发送的消息为$M$, 采用的加密密钥为$K$, 哈希算法为$H$
+
+此外，如果不讨论不可否认性，由于MAC使用的是对称密钥，数字签名使用的是公钥密码，那么数字签名实际上就是公钥密码领域中的消息验证码。
+\section{数字签名的执行方法}
+数字签名是为了一次性做到完整性、真实性和不可否认性的认证。用一句话概括，就是“这个消息确实是他说的”。那么，由谁来验证数字签名呢？最原始的方式是直接方式。
+\subsection{直接方式(Direct digital signatures)}
+即接收方直接利用验证签名算法和发送方的公钥验证发送方的签名。\par
+这种方式依赖于发送方私钥的安全性。如果发送方私钥丢失，那么窃取者可以伪造签名；如果发送方声称私钥丢失，那么签名就失去了验证效力，消息得到了否认。这样的话，数字签名的真实性和不可否认性都不能得到保证。
+\subsection{仲裁方式(Arbitrated digital signatures)}
+对于仲裁方式，需要第三方$C$, 并且$C$应该收到发送方$A$和接收方$B$的高度信任，而且拥有$A$的公钥与加密用的密钥。$C$称为仲裁方(Arbiter)。发送方将消息及其签名先发给仲裁方。仲裁方验证了消息的完整性、真实性和不可否认性后，一般是加上时间戳，然后将消息发送给$B$.\par
+下面介绍一些具体的数字签名算法。
+\section{基于公钥密码的数字签名的基本步骤}
+下面假设发送者是$A$, 接收者是$B$, 第三方是$C$, 要发送的消息为$M$, 采用的加密密钥为$K$, 哈希算法为$H$，用于加密消息的算法为$E$, 其对应的解密消息的算法为$D$, 此外还有一个公钥加密算法$\mathscr{E}$与其对应的解密算法$\mathscr{D}$. 这里要求用于数字签名的公钥密码需要满足一个性质：
+\[\mathscr{D}_{PK}\pth{\mathscr{E}_{SK}{M}}=\mathscr{D}_{SK}\pth{\mathscr{E}_{PK}\pth{M}}\]
+
+也就是说，公钥和私钥都可以用于加密或者解密。满足这一性质的公钥密码，最著名的就是RSA.
 \subsection{密钥生成算法}
 由发送者生成一对公钥-私钥对$\pth{PK, SK}$，同时向外公布公钥$PK$。\par
 注意，发送者用于签名的公-私钥对不能用于加密。
 \subsection{签名算法}
-\[A\to B:\E{K}{M},\]
+\[A\to B:\E{K}{M},\mathscr{E}_{SK}\pth{H\pth{M}}\]
+\subsection{验证签名算法}
+$B$收到$A$发送的两部分密文$C$与签名$S$. 先用双方共享的密钥$K$解密$C$得到$M'=\D{K}{C}$, 然后求其摘要$h'=H\pth{M'}$. 再用$A$公开的公钥$PK$解密$S$得到$h''=\mathscr{D}_{PK}\pth{S}$. 如果$h'=h''$, 则签名有效。
+\subsection{讨论}
+这里为什么需要哈希函数呢？我们如果不进行哈希，直接由$A$向$B$发送
+\[A\to B:\E{K}{M},\mathscr{E}_{SK}\pth{M}\]
 
+行不行呢？\par
+由于我们之前提到的用于数字签名的公钥密码满足性质
+\[\mathscr{D}_{PK}\pth{\mathscr{E}_{SK}{M}}=\mathscr{D}_{SK}\pth{\mathscr{E}_{PK}\pth{M}}\]
+
+同时，$A$用于签名的公钥由于是广播给所有人的，所以，我们可以轻松地伪造一条由$A$签名的消息：\par
+任意选择一个签名$S$, 计算$M=\mathscr{D}_{PK}\pth{S}$, 那么消息$\E{K}{M}, S$就会被成功验证为$A$签名的一条消息。\par
+而如果我们增加了哈希，不仅可以验证消息的完整性，同时，也可以抵御这种攻击。
+\section{数字签名算法DSA}
+DSA是NIST推荐的数字签名算法。其算法如下：
+\subsection{密钥生成算法}
+\begin{enumerate}
+    \item 选择整数对$\pth{L, N}$. 其可选择的取值有：
+    \begin{itemize}
+        \item $L=1024, N=160$
+        \item $L=2048, N=224$
+        \item $L=2048, N=256$
+        \item $L=3072, N=256$
+    \end{itemize}
+
+    \item 生成一个长度为$N$的大素数$q$, 即$2^{N-1} < q < 2^N$.
+    \item 生成一个长度为$L$的大素数$p$, 即$2^{M-1} < p < 2^M$. 且满足$q\mid p - 1$.
+    \item 选择有限域$\GF\pth{p}$的一个$q$阶子群$G$, 选择$G$的一个生成元$g$, 满足$1<g<p$
+    \item 生成一个随机数$x$满足$0<x<q$
+    \item 计算$y=g^x\bmod{p}$
+    \item 选择一种哈希算法$H$
+\end{enumerate}
+
+其中，$\pth{p, q, g}$称为全局公开钥，所有人都能获得；$x$为私钥，$y$为公钥。同时，双方还应知道使用的哈希算法$H$.\par
+在实际操作过程中，由$p, q$生成$g$的方法如下：
+\begin{enumerate}
+    \item 计算$\ext e=\frac{p-1}{q}$
+    \item\label{DSAgenH} 生成一个随机数$h$满足$1<h<p-1$.
+    \item 计算$g=h^e\bmod{p}$
+    \item 如果$g=1$, 则返回步骤\ref{DSAgenH}
+\end{enumerate}
+\subsection{签名算法}
+假设明文为$M$, 全局公开钥为$\pth{p, q, g}$, 私钥为$x$.
+\begin{enumerate}
+    \item 生成一个随机数$k$, 满足$0<k<q$
+    \item 计算$r=\pth{g^k\bmod{p}}\bmod{q}$
+    \item 假设$k$模$q$的逆元为$k^{-1}$, 计算$s=\pth{k^{-1}\pth{H(M)+xr}}\bmod{q}$
+\end{enumerate}
+
+生成的签名为$\pth{r, s}$
+\subsection{验证签名算法}
+假设接收方解密得到的明文为$M'$, 签名为$\pth{r', s'}$, 全局公开钥为$\pth{p, q, g}$, 公钥为$y$.
+\begin{enumerate}
+    \item 假设$s'$模$q$的逆元为$\pth{s'}^{-1}$, 计算
+    \begin{align*}
+        w&=\pth{s'}^{-1}\bmod{q}\\
+        u_1&=\pth{H\pth{M'}w}\bmod{q}\\
+        u_2&=r'w\bmod{q}\\
+        v&=\pth{\pth{g^{u_1}y^{u_2}\bmod{p}}\bmod{q}}
+    \end{align*}
+    \item 如果$v=r'$, 则签名有效；反之无效
+\end{enumerate}
