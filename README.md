@@ -30,22 +30,26 @@
 
 本章的 tex 源码可在[Evian-Zhang/Introduction-to-modern-cryptography/chapters/chapter_4](https://github.com/Evian-Zhang/Introduction-to-modern-cryptography/tree/master/chapters/chapter_4/)中找到。
 
-### 第五章 安全协议
-
-本章介绍了安全协议，以及对称密码、非对称密码的密钥分配、密钥管理方法。
-
-本章的 tex 源码可在[Evian-Zhang/Introduction-to-modern-cryptography/chapters/chapter_5](https://github.com/Evian-Zhang/Introduction-to-modern-cryptography/tree/master/chapters/chapter_5/)中找到。
-
-### 第六章 哈希算法
+### 第五章 哈希算法
 
 本章介绍了哈希算法的 Merkle-Damgård 结构，以及MD5和SHA-256哈希算法。
 
-本章的 tex 源码可在[Evian-Zhang/Introduction-to-modern-cryptography/chapters/chapter_6](https://github.com/Evian-Zhang/Introduction-to-modern-cryptography/tree/master/chapters/chapter_6/)中找到。
+本章的 tex 源码可在[Evian-Zhang/Introduction-to-modern-cryptography/chapters/chapter_5](https://github.com/Evian-Zhang/Introduction-to-modern-cryptography/tree/master/chapters/chapter_5/)中找到。
 
-### 第七章 消息认证码
+### 第六章 消息认证码
 
 本章介绍了消息认证码的三种类型，以及Poly1305算法的细节，同时也介绍了认证加密的过程。
 
+本章的 tex 源码可在[Evian-Zhang/Introduction-to-modern-cryptography/chapters/chapter_6](https://github.com/Evian-Zhang/Introduction-to-modern-cryptography/tree/master/chapters/chapter_6/)中找到。
+
+### 第七章 数字签名
+
+本章介绍了数字签名的基本概念，以及DSA算法。
+
 本章的 tex 源码可在[Evian-Zhang/Introduction-to-modern-cryptography/chapters/chapter_7](https://github.com/Evian-Zhang/Introduction-to-modern-cryptography/tree/master/chapters/chapter_7/)中找到。
 
-### 第八章 数字签名
+### 第八章 安全协议
+
+本章介绍了安全协议，以及对称密码、非对称密码的密钥分配、密钥管理方法。
+
+本章的 tex 源码可在[Evian-Zhang/Introduction-to-modern-cryptography/chapters/chapter_8](https://github.com/Evian-Zhang/Introduction-to-modern-cryptography/tree/master/chapters/chapter_8/)中找到。
