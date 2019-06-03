@@ -13,8 +13,7 @@
 \end{itemize}
 
 这三个问题在密码学中被称作消息认证(Message Authentication)问题。\par
-在上一章讨论的安全协议中，我们可以利用一些复杂的安全协议，达到甚至在没有第三方的情况下，仍然能确认发送者的身份。但是，我们到目前为止却并没有找到能保证消息没有被篡改的方法。\par
-因此，我们首先解决第一个问题：如何确认消息没有被篡改。也就是，确定消息的完整性。
+我们首先解决第一个问题：如何确认消息没有被篡改。也就是，确定消息的完整性。
 \section{定义}
 在讨论哈希函数之前，我们需要充分讨论一下目前需要完成的目标：接收者如何确认消息没有被篡改。如果一个算法要实现这个目标，那么这个算法必然是接收我们要传递的消息$m$，并产生一个输出$h$。发送者利用这个算法，将消息$m$以及输出$h$都发送给接收者，而接收者再次利用这个算法处理收到的消息$m'$，通过对比输出$h'$与发送者发送的输出$h$，判断消息$m$是否得到篡改。那么，这一算法最重要的一点是什么呢？显然是尽量避免两个不同的消息$m_1\neq m_2$, 其通过这个算法产生的输出$h_1$和$h_2$相同。如果产生这种情况，我们则称该算法拥有一个\textbf{碰撞}。更进一步地，从抵抗攻击的角度来看，这种算法应该使敌手在截获消息经过该算法的输出$h$以后，不能或者难以生成一个篡改的消息$m'$, 使得其经过该算法的输出$h'=h$. 在最理想的状态下，实现这一目标最好的方法就是，从$h$中敌手无法获得任何有关$m$的信息。\par
 根据以上的讨论，这个算法$H(x)$需要满足的性质有：
@@ -35,12 +34,12 @@
 \centering
 \begin{minipage}[t]{0.49\textwidth}
 \centering
-\includegraphics[width=10em]{chapters/chapter_6/MD5_unchanged.jpg}
+\includegraphics[width=10em]{chapters/chapter_5/MD5_unchanged.jpg}
 \caption{未篡改的原消息}
 \end{minipage}
 \begin{minipage}[t]{0.49\textwidth}
 \centering
-\includegraphics[width=10em]{chapters/chapter_6/MD5_changed.jpg}
+\includegraphics[width=10em]{chapters/chapter_5/MD5_changed.jpg}
 \caption{篡改后的消息}
 \end{minipage}
 \end{figure}

@@ -208,7 +208,7 @@ BigInteger inverse(const BigInteger a, const BigInteger mod)
     BigInteger inverse = 0;
     BigInteger tmp = 0;
     extendGcd(a, mod, inverse, tmp);
-    return inverse;
+    return (inverse % mod + mod) % mod;
 }
 \end{verbatim}
 \end{prove}
